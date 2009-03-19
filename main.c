@@ -26,6 +26,7 @@ typedef enum {REQUEST=1, RESPONSE=2, SUCCESS=3, FAILURE=4, H3CDATA=10} EAP_Code;
 typedef enum {IDENTITY=1, NOTIFICATION=2, MD5=4, AVAILABLE=20} EAP_Type;
 
 // 子函数声明
+int ProcessAuthenticaiton_WiredEthernet(const char *UserName, const char *Password, const char *DeviceName);
 static void BuildStartPkt(uint8_t pktbuf[], uint8_t localmac[6]);
 static int BuildIdentityPkt(const uint8_t request[],
 				   uint8_t response[],
@@ -52,20 +53,14 @@ extern void FillBase64Area(char area[]);
 #define DPRINTF(...)	fprintf(stderr, __VA_ARGS__)
 
 
-// 存储本机网卡物理地址
-static uint8_t	MAC[6];
 
-/* 主程序 */
+/**
+ * 函数：main()
+ *
+ * 检查程序的执行权限和命令行参数格式
+ */
 int main(int argc, char *argv[])
 {
-	char	errbuf[PCAP_ERRBUF_SIZE];
-	pcap_t	*adhandle;
-	char	*UserName;
-	char	*Password;
-	const char	DeviceName[] = "eth0";
-	char		FilterStr[100];
-	struct bpf_program	fcode;
-
 	/* 检查当前是否具有root权限 */
 	if (getuid() != 0) {
 		fprintf(stderr, "Sorry, currently %s must be executed as root.\n", argv[0]);
@@ -77,10 +72,33 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "缺少命令行参数\n");
 		fprintf(stderr, "Usage:\n\t%s username password\n", argv[0]);
 		exit(-1);
-	} else {
-		UserName = argv[1];
-		Password = argv[2];
 	}
+
+	/* Process 802.1X authentication through wired Ethernet. */
+	/* Note: 一般情况下使用eth0即可 */
+	ProcessAuthenticaiton_WiredEthernet(argv[1], argv[2], "eth0");
+
+	return (0);
+}
+
+
+// 存储本机网卡物理地址
+static uint8_t	MAC[6];
+
+/**
+ * 函数：ProcessAuthenticaiton_WiredEthernet()
+ *
+ * Process 802.1X authentication through wired Ethernet
+ * 使用以太网进行802.1X认证
+ */
+
+int ProcessAuthenticaiton_WiredEthernet(const char *UserName, const char *Password, const char *DeviceName)
+{
+	char	errbuf[PCAP_ERRBUF_SIZE];
+	pcap_t	*adhandle;
+	char		FilterStr[100];
+	struct bpf_program	fcode;
+
 
 	/* 查询本机网卡MAC地址 */
 	GetMacFromDevice(MAC, DeviceName);
@@ -100,7 +118,6 @@ int main(int argc, char *argv[])
 	pcap_setfilter(adhandle, &fcode);
 
 
-	// TODO: 将整个认证会话置于子函数中
 	START_AUTHENTICATION:
 	{
 		int retcode;
