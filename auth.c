@@ -18,32 +18,35 @@
 #include <sys/socket.h>
 #include <net/if.h>
 #include <arpa/inet.h>
-#include <linux/if_ether.h>
 
 
 // 自定义常量
 typedef enum {REQUEST=1, RESPONSE=2, SUCCESS=3, FAILURE=4, H3CDATA=10} EAP_Code;
 typedef enum {IDENTITY=1, NOTIFICATION=2, MD5=4, AVAILABLE=20} EAP_Type;
+typedef uint8_t EAP_ID;
 
 // 函数声明
 int ProcessAuthenticaiton_WiredEthernet(const char *UserName, const char *Password, const char *DeviceName);
-static void BuildStartPkt(uint8_t pktbuf[], uint8_t localmac[6]);
-static int BuildIdentityPkt(const uint8_t request[],
-				  uint8_t response[],
-			    const uint8_t ip[4],
-			    const char    username[]);
-static int BuildMD5Pkt(const uint8_t request[],
-			     uint8_t response[],
-			const char   username[],
-			const char   passwd[]);
-static int BuildAvailablePkt(const uint8_t request[],
-				   uint8_t response[],
-			     const uint8_t ip[4],
-				const char username[]);
+static void SendStartPkt(pcap_t *adhandle, const uint8_t mac[]);
+static void SendLogoffPkt(pcap_t *adhandle, const uint8_t mac[]);
+static void SendResponseIdentity(pcap_t *adhandle,
+			const uint8_t request[],
+			const uint8_t ethhdr[],
+			const uint8_t ip[4],
+			const char    username[]);
+static void SendResponseMD5(pcap_t *adhandle,
+		const uint8_t request[],
+		const uint8_t ethhdr[],
+		const char username[],
+		const char passwd[]);
+static void SendResponseAvailable(pcap_t *adhandle,
+		const uint8_t request[],
+		const uint8_t ethhdr[],
+		const uint8_t ip[4],
+		const char    username[]);
 static int GetErrorCode(const uint8_t captured[]);
 static void DumpFailurePkt(const uint8_t captured[]);
 static void GetMacFromDevice(uint8_t mac[6], const char *devicename);
-static void FillEthHdr(const uint8_t request[], uint8_t response[]);
 // From fillmd5.c
 extern void FillMD5Area(uint8_t digest[],
 	       	uint8_t id, const char passwd[], const uint8_t srcMD5[]);
@@ -56,8 +59,6 @@ extern void GetIpFromDevice(uint8_t ip[4], const char DeviceName[]);
 #define DPRINTF(...)	fprintf(stderr, __VA_ARGS__)
 
 
-// 存储本机网卡物理地址
-static uint8_t	MAC[6];
 
 /**
  * 函数：ProcessAuthenticaiton_WiredEthernet()
@@ -70,7 +71,8 @@ int ProcessAuthenticaiton_WiredEthernet(const char *UserName, const char *Passwo
 {
 	char	errbuf[PCAP_ERRBUF_SIZE];
 	pcap_t	*adhandle;
-	char		FilterStr[100];
+	uint8_t	MAC[6];
+	char	FilterStr[100];
 	struct bpf_program	fcode;
 
 
@@ -82,12 +84,12 @@ int ProcessAuthenticaiton_WiredEthernet(const char *UserName, const char *Passwo
 		exit(-1);
 	}
 
-	/* 查询本机网卡MAC地址 */
+	/* 查询本机MAC地址 */
 	GetMacFromDevice(MAC, DeviceName);
 
-	// 设置过滤器，只捕获发往本机的802.1X认证会话（不接收多播信息）
+	/* 设置过滤器，初始情况下只捕获发往本机的802.1X认证会话，不接收多播信息（避免误捕获其他客户端发出的多播信息）*/
 	sprintf(FilterStr, "(ether proto 0x888e) and (ether dst host %02x:%02x:%02x:%02x:%02x:%02x)",
-		MAC[0],MAC[1],MAC[2],MAC[3],MAC[4],MAC[5]);
+							MAC[0],MAC[1],MAC[2],MAC[3],MAC[4],MAC[5]);
 	pcap_compile(adhandle, &fcode, FilterStr, 1, 0xff);
 	pcap_setfilter(adhandle, &fcode);
 
@@ -95,19 +97,13 @@ int ProcessAuthenticaiton_WiredEthernet(const char *UserName, const char *Passwo
 	START_AUTHENTICATION:
 	{
 		int retcode;
-		unsigned pktlen;
 		struct pcap_pkthdr *header;
 		const uint8_t	*captured;
-		uint8_t	StartPkt[60]	={0};
-		uint8_t	MD5Pkt[60]	={0};
-		uint8_t	IdentityPkt[128]={0};
-		uint8_t	AvailablePkt[128]={0};
-		uint8_t	NotificationPkt[60]={0};
-		uint8_t	ip[4];
+		uint8_t	ethhdr[14]={0};
+		uint8_t	ip[4]={0};
 
 		/* 主动发起认证会话 */
-		BuildStartPkt(StartPkt, MAC);
-		pcap_sendpacket(adhandle, StartPkt, sizeof(StartPkt));
+		SendStartPkt(adhandle, MAC);
 		DPRINTF("[ ] Client: Start.\n");
 
 		/* 接收来自认证服务器的数据并应答 */
@@ -126,16 +122,31 @@ int ProcessAuthenticaiton_WiredEthernet(const char *UserName, const char *Passwo
 		}
 
 		assert((EAP_Code)captured[18] == REQUEST);
-		// 若收到的第一个Request包是Notification，直接回答一个空的Notification包
+
+		// 填写应答包的Ethernet Header（14字节），以后无须再修改
+		memcpy(ethhdr+0, captured+6, 6);
+		memcpy(ethhdr+6, MAC, 6);
+		ethhdr[12] = 0x88;
+		ethhdr[13] = 0x8e;
+
+		// 若收到的第一个Request包是Notification，直接回答一个无附加内容的Notification包（iNode有附加内容）
 		if ((EAP_Type)captured[22] == NOTIFICATION)
 		{
+			uint8_t response[128]={0};
+			memcpy(response, ethhdr, 14);
 			DPRINTF("[%d] Server: Request Notification!\n", captured[19]);
-			// 应答Notification
-			FillEthHdr(captured, NotificationPkt);
-			memcpy(NotificationPkt+14, captured+14, 60-14);
-			NotificationPkt[18] = RESPONSE;
-			pcap_sendpacket(adhandle, NotificationPkt, 60);
-			DPRINTF("[%d] Client: Response Notification.\n", NotificationPkt[19]);
+			// 填写Notification包并发送
+			response[14] = 0x01;
+			response[15] = 0x00;
+			response[16] = 0x00;
+			response[17] = 0x05;
+			response[18] = (EAP_Code) RESPONSE;
+			response[19] = (EAP_ID) captured[19];
+			response[20] = 0x00;
+			response[21] = 0x05;
+			response[22] = (EAP_Type) NOTIFICATION;
+			pcap_sendpacket(adhandle, response, 23);
+			DPRINTF("[%d] Client: Response Notification.\n", response[19]);
 
 			// 继续接收下一个Request包
 			retcode = pcap_next_ex(adhandle, &header, &captured);
@@ -160,31 +171,10 @@ int ProcessAuthenticaiton_WiredEthernet(const char *UserName, const char *Passwo
 			DPRINTF("Error! Unexpected request type\n");
 			exit(-1);
 		}
-		// 发送Response Identity
-		pktlen = BuildIdentityPkt(captured, IdentityPkt, ip, UserName);
-		assert(pktlen <= sizeof(IdentityPkt));
-		pcap_sendpacket(adhandle, IdentityPkt, pktlen);
-		DPRINTF("[%d] Client: Response Identity.\n", IdentityPkt[19]);
-
-		// 接收并应答“MD5-Challenge”
-		retcode = pcap_next_ex(adhandle, &header, &captured);
-		assert(retcode==1);
-		assert(   (EAP_Code)captured[18] == REQUEST
-			&&(EAP_Type)captured[22] == MD5);
-		DPRINTF("[%d] Server: Request MD5-Challenge!\n", captured[19]);
-
-		pktlen = BuildMD5Pkt(captured, MD5Pkt, UserName, Password);
-		assert(pktlen <= sizeof(MD5Pkt));
-		pcap_sendpacket(adhandle, MD5Pkt, pktlen);
-		DPRINTF("[%d] Client: Response MD5-Challenge.\n", MD5Pkt[19]);
-			//注：H3C发送的MD5包长固定为60字节，其中最后20字节为
-			//    用户名区域。此处pktlen可以小于等于60。
-
-		// 重设过滤器，捕获华为802.1X认证设备发来的包（包括多播Request Identity）
-		sprintf(FilterStr, "(ether proto 0x888e) and (ether src host %02x:%02x:%02x:%02x:%02x:%02x)",
-			captured[6],captured[7],captured[8],captured[9],captured[10],captured[11]);
-		pcap_compile(adhandle, &fcode, FilterStr, 1, 0xff);
-		pcap_setfilter(adhandle, &fcode);
+		// 发送Response Identity包
+		GetIpFromDevice(ip, DeviceName);
+		SendResponseIdentity(adhandle, captured, ethhdr, ip, UserName);
+		DPRINTF("[%d] Client: Response Identity.\n", (EAP_ID)captured[19]);
 
 		// 循环应答保持在线，另外处理认证失败信息和其他数据
 		for (;;)
@@ -203,30 +193,30 @@ int ProcessAuthenticaiton_WiredEthernet(const char *UserName, const char *Passwo
 
 			if ((EAP_Code)captured[18] == REQUEST)
 			{
-				EAP_Type  type = captured[22];
-				GetIpFromDevice(ip, DeviceName);
-				// 分两种情况：Identity或AVAILABLE
-				if (type == IDENTITY)
+				switch ((EAP_Type)captured[22])
 				{
-					DPRINTF("[%d] Server: Request Identity!\n", captured[19]);
-					pktlen = BuildIdentityPkt(captured, IdentityPkt, ip, UserName);
-					assert(pktlen <= sizeof(IdentityPkt));
-					pcap_sendpacket(adhandle, IdentityPkt, pktlen);
-					DPRINTF("[%d] Client: Response Identity.\n", IdentityPkt[19]);
-				}
-				else if (type == AVAILABLE)
-				{
-					DPRINTF("[%d] Server: Request AVAILABLE!\n", captured[19]);
-					pktlen = BuildAvailablePkt(captured, AvailablePkt, ip, UserName);
-					assert(pktlen <= sizeof(AvailablePkt));
-					pcap_sendpacket(adhandle, AvailablePkt, pktlen);
-					DPRINTF("[%d] Client: Response AVAILABLE.\n", AvailablePkt[19]);
-				}
-				else
-				{
-					DPRINTF("[%d] Server: Request (type:%d)!\n", captured[19], type);
+				 case IDENTITY:
+					DPRINTF("[%d] Server: Request Identity!\n", (EAP_ID)captured[19]);
+					GetIpFromDevice(ip, DeviceName);
+					SendResponseIdentity(adhandle, captured, ethhdr, ip, UserName);
+					DPRINTF("[%d] Client: Response Identity.\n", (EAP_ID)captured[19]);
+					break;
+				 case AVAILABLE:
+					DPRINTF("[%d] Server: Request AVAILABLE!\n", (EAP_ID)captured[19]);
+					GetIpFromDevice(ip, DeviceName);
+					SendResponseAvailable(adhandle, captured, ethhdr, ip, UserName);
+					DPRINTF("[%d] Client: Response AVAILABLE.\n", (EAP_ID)captured[19]);
+					break;
+				 case MD5:
+					DPRINTF("[%d] Server: Request MD5-Challenge!\n", (EAP_ID)captured[19]);
+					SendResponseMD5(adhandle, captured, ethhdr, UserName, Password);
+					DPRINTF("[%d] Client: Response MD5-Challenge.\n", (EAP_ID)captured[19]);
+					break;
+				 default:
+					DPRINTF("[%d] Server: Request (type:%d)!\n", (EAP_ID)captured[19], (EAP_Type)captured[22]);
 					DPRINTF("Error! Unexpected request type\n");
 					exit(-1);
+					break;
 				}
 			}
 			else if ((EAP_Code)captured[18] == FAILURE)
@@ -337,49 +327,42 @@ void GetMacFromDevice(uint8_t mac[6], const char *devicename)
 
 
 static
-void FillEthHdr(const uint8_t request[], uint8_t response[])
-{
-	const struct ethhdr	*requHdr = (struct ethhdr *) request;
-	struct ethhdr		*respHdr = (struct ethhdr *) response;
-
-	memcpy(respHdr->h_dest,    requHdr->h_source,  ETH_ALEN);
-	memcpy(respHdr->h_source,  MAC,                ETH_ALEN);
-	       respHdr->h_proto =  requHdr->h_proto;
-}
-
-
-static
-void BuildStartPkt(uint8_t pktbuf[], uint8_t localmac[6])
+void SendStartPkt(pcap_t *handle, const uint8_t localmac[])
 {
 	const uint8_t MultcastAddr[6] = {
 		0x01,0x80,0xc2,0x00,0x00,0x03
 	};
+	uint8_t packet[18];
 
-	// 以太报头
-	memcpy(pktbuf, MultcastAddr, 6);
-	memcpy(pktbuf+6, localmac,   6);
-	pktbuf[12] = 0x88;
-	pktbuf[13] = 0x8e;
+	// Ethernet Header (14 Bytes)
+	memcpy(packet, MultcastAddr, 6);
+	memcpy(packet+6, localmac,   6);
+	packet[12] = 0x88;
+	packet[13] = 0x8e;
 
-	// EAPOL头
-	pktbuf[14] = 0x01;	//
-	pktbuf[15] = 0x01;	// Type=1
-	pktbuf[16] = pktbuf[17] =0x00;// Length=0x0000
+	// EAPOL (4 Bytes)
+	packet[14] = 0x01;	// Version=1
+	packet[15] = 0x01;	// Type=Start
+	packet[16] = packet[17] =0x00;// Length=0x0000
+
+	// 发包
+	pcap_sendpacket(handle, packet, sizeof(packet));
 }
 
 
 static
-int BuildAvailablePkt(const uint8_t request[], uint8_t response[], const uint8_t ip[4], const char username[])
+void SendResponseAvailable(pcap_t *handle, const uint8_t request[], const uint8_t ethhdr[], const uint8_t ip[4], const char username[])
 {
 	int i;
 	uint16_t eaplen;
 	int usernamelen;
+	uint8_t response[128];
 
 	assert((EAP_Code)request[18] == REQUEST);
 	assert((EAP_Type)request[22] == AVAILABLE);
 
-	// Ethernet Header (14 Bytes)
-	FillEthHdr(request, response);
+	// Fill Ethernet header
+	memcpy(response, ethhdr, 14);
 
 	// 802,1X Authentication
 	// {
@@ -419,22 +402,24 @@ int BuildAvailablePkt(const uint8_t request[], uint8_t response[], const uint8_t
 	memcpy(response+16, &eaplen, sizeof(eaplen));
 	memcpy(response+20, &eaplen, sizeof(eaplen));
 
-	// Return the length of the response packet.
-	return (i);
+	// 发送
+	pcap_sendpacket(handle, response, i);
 }
 
+
 static
-int BuildIdentityPkt(const uint8_t request[], uint8_t response[], const uint8_t ip[4], const char username[])
+void SendResponseIdentity(pcap_t *adhandle, const uint8_t request[], const uint8_t ethhdr[], const uint8_t ip[4], const char username[])
 {
-	int i;
+	uint8_t	response[128];
+	size_t i;
 	uint16_t eaplen;
 	int usernamelen;
 
 	assert((EAP_Code)request[18] == REQUEST);
 	assert((EAP_Type)request[22] == IDENTITY);
 
-	// Ethernet Header (14 Bytes)
-	FillEthHdr(request, response);
+	// Fill Ethernet header
+	memcpy(response, ethhdr, 14);
 
 	// 802,1X Authentication
 	// {
@@ -464,6 +449,7 @@ int BuildIdentityPkt(const uint8_t request[], uint8_t response[], const uint8_t 
 				usernamelen = strlen(username); //末尾添加用户名
 				memcpy(response+i, username, usernamelen);
 				i += usernamelen;
+				assert(i <= sizeof(response));
 			// }
 		// }
 	// }
@@ -473,26 +459,30 @@ int BuildIdentityPkt(const uint8_t request[], uint8_t response[], const uint8_t 
 	memcpy(response+16, &eaplen, sizeof(eaplen));
 	memcpy(response+20, &eaplen, sizeof(eaplen));
 
-	// Return the length of the response packet.
-	return (i);
+	// 发送
+	pcap_sendpacket(adhandle, response, i);
+	return;
 }
 
 
 static
-int BuildMD5Pkt(const uint8_t request[], uint8_t response[], const char username[], const char passwd[])
+void SendResponseMD5(pcap_t *handle, const uint8_t request[], const uint8_t ethhdr[], const char username[], const char passwd[])
 {
 	uint16_t eaplen;
 	size_t   usernamelen;
+	size_t   packetlen;
+	uint8_t  response[128];
 
 	assert((EAP_Code)request[18] == REQUEST);
 	assert((EAP_Type)request[22] == MD5);
 
 	usernamelen = strlen(username);
 	eaplen = htons(22+usernamelen);
+	packetlen = 14+4+22+usernamelen; // ethhdr+EAPOL+EAP+usernamelen
 
-	// Ethernet Header (14 Bytes)
-	FillEthHdr(request, response);
-	
+	// Fill Ethernet header
+	memcpy(response, ethhdr, 14);
+
 	// 802,1X Authentication
 	// {
 		response[14] = 0x1;	// 802.1X Version 1
@@ -512,7 +502,30 @@ int BuildMD5Pkt(const uint8_t request[], uint8_t response[], const char username
 		// }
 	// }
 
-	return (14+4+22+usernamelen);
-	// etherHdr+EAPOL+EAP+usernamelen
+	pcap_sendpacket(handle, response, packetlen);
+}
+
+
+static
+void SendLogoffPkt(pcap_t *handle, const uint8_t localmac[])
+{
+	const uint8_t MultcastAddr[6] = {
+		0x01,0x80,0xc2,0x00,0x00,0x03
+	};
+	uint8_t packet[18];
+
+	// Ethernet Header (14 Bytes)
+	memcpy(packet, MultcastAddr, 6);
+	memcpy(packet+6, localmac,   6);
+	packet[12] = 0x88;
+	packet[13] = 0x8e;
+
+	// EAPOL (4 Bytes)
+	packet[14] = 0x01;	// Version=1
+	packet[15] = 0x02;	// Type=Logoff
+	packet[16] = packet[17] =0x00;// Length=0x0000
+
+	// 发包
+	pcap_sendpacket(handle, packet, sizeof(packet));
 }
 
