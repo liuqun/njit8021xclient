@@ -145,18 +145,10 @@ int ProcessAuthenticaiton_WiredEthernet(const char *UserName, const char *Passwo
 		if ((EAP_Type)captured[22] == IDENTITY)
 		{
 			DPRINTF("[%d] Server: Request Identity!\n", captured[19]);
-			pktlen = BuildIdentityPkt(captured, IdentityPkt, UserName);
-			assert(pktlen <= sizeof(IdentityPkt));
-			pcap_sendpacket(adhandle, IdentityPkt, pktlen);
-			DPRINTF("[%d] Client: Response Identity.\n", IdentityPkt[19]);
 		}
 		else if ((EAP_Type)captured[22] == AVAILABLE)
 		{
 			DPRINTF("[%d] Server: Request AVAILABLE!\n", captured[19]);
-			pktlen = BuildAvailablePkt(captured, AvailablePkt, UserName);
-			assert(pktlen <= sizeof(AvailablePkt));
-			pcap_sendpacket(adhandle, AvailablePkt, pktlen);
-			DPRINTF("[%d] Client: Response AVAILABLE.\n", AvailablePkt[19]);
 		}
 		else
 		{
@@ -164,6 +156,11 @@ int ProcessAuthenticaiton_WiredEthernet(const char *UserName, const char *Passwo
 			DPRINTF("Error! Unexpected request type\n");
 			exit(-1);
 		}
+		// 发送Response Identity
+		pktlen = BuildIdentityPkt(captured, IdentityPkt, UserName);
+		assert(pktlen <= sizeof(IdentityPkt));
+		pcap_sendpacket(adhandle, IdentityPkt, pktlen);
+		DPRINTF("[%d] Client: Response Identity.\n", IdentityPkt[19]);
 
 		// 接收并应答“MD5-Challenge”
 		retcode = pcap_next_ex(adhandle, &header, &captured);
