@@ -7,7 +7,7 @@ all: njit-client
 
 
 #------------------------------------
-njit-client: main.o auth.o fillmd5.o fillbase64.o
+njit-client: main.o auth.o fillmd5.o fillbase64.o ip.o
 	$(LINK.o) $^ $(LDLIBS) -o $@
 %.o: %.c %.h
 	$(COMPILE.c) $< -o $@

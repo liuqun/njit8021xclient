@@ -48,6 +48,8 @@ extern void FillMD5Area(uint8_t digest[],
 	       	uint8_t id, const char passwd[], const uint8_t srcMD5[]);
 // From fillbase64.c
 extern void FillBase64Area(char area[]);
+// From ip.c
+extern void GetIpFromDevice(uint8_t ip[4], const char DeviceName[]);
 
 // 定义DPRINTF宏：输出调试信息
 #define DPRINTF(...)	fprintf(stderr, __VA_ARGS__)
@@ -351,18 +353,25 @@ int BuildIdentityPkt(const uint8_t request[],
 	response[22] = (EAP_Type) IDENTITY;	// Type
 
 	// H3C未公开的部分
-	response[23] = 0x06;	// 验证H3C客户端版本号
-	response[24] = 0x07;	//
-	FillBase64Area((char*)response+25);//Base64区域，共28字节 [25<=index<=52]
-	response[53] = ' ';	// 两个空格符
-	response[54] = ' ';	//
-	memcpy(response+55, username, strlen(username));//without '\0'
+	int i = 23;
+	//response[i++] = 0x15;	// 上传IP地址
+	//response[i++] = 0x04;	//
+	//GetIpFromDevice(response+i, "eth0");
+	//i += 4;
+	response[i++] = 0x06;	// 验证H3C客户端版本号
+	response[i++] = 0x07;	//
+	FillBase64Area((char*)response+i);//Base64区域，共28字节
+	i += 28;
+	response[i++] = ' ';	// 两个空格符
+	response[i++] = ' ';	//
+	memcpy(response+i, username, strlen(username));
+	i += usernamelen;
 
 	// 添加报头
 	FillEAPOL(response);
 	FillEthHdr(request, response);
 
-	return (14+4+(1+1+2+1)+(2+28+2)+usernamelen);
+	return (i);
 }
 
 static
