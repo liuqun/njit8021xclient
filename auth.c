@@ -228,7 +228,9 @@ int ProcessAuthenticaiton_WiredEthernet(const char *UserName, const char *Passwo
 			}
 			else if ((EAP_Code)captured[18] == FAILURE)
 			{
-				int errcode = GetErrorCode(captured);
+				int	errcode;
+				DPRINTF("[%d] Server: Failure.\n", captured[19]);
+				errcode = GetErrorCode(captured);
 				switch (errcode)
 				{
 				 case -1: // 被服务器踢下线后自动重连
