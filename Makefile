@@ -1,5 +1,5 @@
 CC := gcc
-CFLAGS := -g -Wall -I.
+CFLAGS := -g -Wall -Wextra -I.
 LDLIBS := -lgcrypt -lpcap
 
 #------------------------------------
