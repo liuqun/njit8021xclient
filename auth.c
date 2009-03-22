@@ -87,7 +87,11 @@ int ProcessAuthenticaiton_WiredEthernet(const char *UserName, const char *Passwo
 	/* 查询本机MAC地址 */
 	GetMacFromDevice(MAC, DeviceName);
 
-	/* 设置过滤器，初始情况下只捕获发往本机的802.1X认证会话，不接收多播信息（避免误捕获其他客户端发出的多播信息）*/
+	/*
+	 * 设置过滤器：
+	 * 初始情况下只捕获发往本机的802.1X认证会话，不接收多播信息（避免误捕获其他客户端发出的多播信息）
+	 * 进入循环体前可以重设过滤器，那时再开始接收多播信息
+	 */
 	sprintf(FilterStr, "(ether proto 0x888e) and (ether dst host %02x:%02x:%02x:%02x:%02x:%02x)",
 							MAC[0],MAC[1],MAC[2],MAC[3],MAC[4],MAC[5]);
 	pcap_compile(adhandle, &fcode, FilterStr, 1, 0xff);
@@ -154,15 +158,14 @@ int ProcessAuthenticaiton_WiredEthernet(const char *UserName, const char *Passwo
 			assert((EAP_Code)captured[18] == REQUEST);
 		}
 
-		// 分两种情况处理：
-		// Request Identity	(南京工程学院目前使用的格式)
-		// Request AVAILABLE	(中南财经政法大学目前使用的格式)
+		// 回答第一个Request Identity / Request AVAILABLE包时需要特殊处理
+		// （都要回答Response Identity包）
 		if ((EAP_Type)captured[22] == IDENTITY)
-		{
+		{	// 南京工程学院目前使用的格式
 			DPRINTF("[%d] Server: Request Identity!\n", captured[19]);
 		}
 		else if ((EAP_Type)captured[22] == AVAILABLE)
-		{
+		{	// 中南财经政法大学目前使用的格式
 			DPRINTF("[%d] Server: Request AVAILABLE!\n", captured[19]);
 		}
 		else
@@ -171,12 +174,16 @@ int ProcessAuthenticaiton_WiredEthernet(const char *UserName, const char *Passwo
 			DPRINTF("Error! Unexpected request type\n");
 			exit(-1);
 		}
-		// 发送Response Identity包
 		GetIpFromDevice(ip, DeviceName);
 		SendResponseIdentity(adhandle, captured, ethhdr, ip, UserName);
 		DPRINTF("[%d] Client: Response Identity.\n", (EAP_ID)captured[19]);
 
-		// 循环应答保持在线，另外处理认证失败信息和其他数据
+		// 重设过滤器，只捕获华为802.1X认证设备发来的包（包括多播Request Identity / Request AVAILABLE）
+		sprintf(FilterStr, "(ether proto 0x888e) and (ether src host %02x:%02x:%02x:%02x:%02x:%02x)",
+			captured[6],captured[7],captured[8],captured[9],captured[10],captured[11]);
+		pcap_compile(adhandle, &fcode, FilterStr, 1, 0xff);
+		pcap_setfilter(adhandle, &fcode);
+		// 循环应答，另外处理认证失败信息和其他H3C自定义数据格式
 		for (;;)
 		{
 			retcode = pcap_next_ex(adhandle, &header, &captured);
@@ -416,7 +423,8 @@ void SendResponseIdentity(pcap_t *adhandle, const uint8_t request[], const uint8
 	int usernamelen;
 
 	assert((EAP_Code)request[18] == REQUEST);
-	assert((EAP_Type)request[22] == IDENTITY);
+	assert((EAP_Type)request[22] == IDENTITY
+	     ||(EAP_Type)request[22] == AVAILABLE); // 兼容中南财经政法大学情况
 
 	// Fill Ethernet header
 	memcpy(response, ethhdr, 14);
