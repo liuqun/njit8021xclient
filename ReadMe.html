@@ -16,6 +16,49 @@
 [项目主页]
 http://gforge.osdn.net.cn/projects/njit8021xclient/
 
+[使用方法]
+假设你的Linux系统里的普通用户名为liuqun，内网802.1X帐号为s-12345、密码为abcde
+一、把可执行文件njit-client拷贝到用户主目录(假设为/home/liuqun目录).
+二、从开始菜单里找到“终端”，打开后进入命令提示符窗口
+三、通过命令行切换为root并运行njit-client程序
+    Ubuntu下命令格式为：
+	sudo ./njit-client s-12345 abcde
+    RedHat/Fedora下命令格式为
+	su -c "./njit-client s-12345 abcde"
+四、程序会输出一些调试信息（因目前仍是测试版本），其中大部分信息不用理会，
+    只需关注如果包括Server: Success.这样一行提示即为802.1X认证成功
+    如果提示为Server: Failure则为认证失败，另外还会输出"E????: "，这是服务器
+    发来的提示信息。
+客户端运行成功时输出的提示信息格式：
+[ ] Client: Start.
+[1] Server: Request Notification!
+[1] Client: Response Notification.
+[2] Server: Request Identity!
+[2] Client: Response Identity.
+[3] Server: Request MD5-Challenge!
+[3] Client: Response MD5-Challenge.
+[4] Server: (H3C data)
+[5] Server: (H3C data)
+[5] Server: Success.
+[6] Server: (H3C data)
+[1] Server: Request Identity!
+[1] Client: Response Identity.
+[7] Server: (H3C data)
+[8] Server: Request Identity!
+[8] Client: Response Identity.
+[1] Server: Request Identity!
+[1] Client: Response Identity.
+[9] Server: Request Identity!
+[9] Client: Response Identity.
+
+五、如果你们学校配置了动态分配IP地址，则通常还要点击桌面托盘里的网络链接图标，
+    选System eth0。这一步实际是让操作系统获取IP地址，之后应该就可以上网了。
+
+[编译问题及依赖的开发包]
+编译客户端的命令为make
+依赖的开发包有：libpcap,libgcrypt
+(如果您在编译过程中遇到困难，请联系项目的维护者)
+
 [项目维护者]
 南京工程学院：liuqun68@gmail.com  njzhaoguobin@163.com
 中南财经政法大学：lamborrari@163.com
