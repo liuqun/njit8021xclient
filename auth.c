@@ -242,6 +242,7 @@ int ProcessAuthenticaiton_WiredEthernet(const char *UserName, const char *Passwo
 					break;
 				 case 2531: // 用户名不存在
 				 case 2542: // 在线用户数量限制
+				 case 2547: // 接入时段限制
 				 case 2553: // 密码错误
 				 case 3137: // 客户端版本号错误
 				 default:   // 其他错误码
