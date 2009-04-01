@@ -117,9 +117,11 @@ int ProcessAuthenticaiton_WiredEthernet(const char *UserName, const char *Passwo
 		assert(retcode==1||retcode==0);
 		if (retcode==0)
 		{
-			fprintf(stderr, "服务器无响应或响应超时\n");
+			DPRINTF("Error: Pcap timeout!\n");
+			DPRINTF("Press 'Enter' to reconnect; Press 'Ctrl-C' to quit.\n");
+			fprintf(stderr, "njit-client: 错误！服务器无响应或响应超时。\n");
+			fprintf(stderr, "             按Enter键重试，按Ctrl-C退出。\n");
 			// Note: 也有可能是网线没插好
-			fprintf(stderr, "按回车键重试，按Ctrl-C退出\n");
 			while (getchar() != '\n')
 				;
 			goto START_AUTHENTICATION;
@@ -190,9 +192,11 @@ int ProcessAuthenticaiton_WiredEthernet(const char *UserName, const char *Passwo
 			assert(retcode==1||retcode==0);
 			if (retcode==0)
 			{
-				fprintf(stderr, "服务器无响应或响应超时\n");
+				DPRINTF("Error: Pcap timeout!\n");
+				DPRINTF("Press 'Enter' to reconnect; Press 'Ctrl-C' to quit.\n");
+				fprintf(stderr, "njit-client: 错误！服务器无响应或响应超时。\n");
+				fprintf(stderr, "             按Enter键重试，按Ctrl-C退出。\n");
 				// Note: 也有可能是网线没插好
-				fprintf(stderr, "按回车键重试，按Ctrl-C退出\n");
 				while (getchar() != '\n')
 					;
 				goto START_AUTHENTICATION;
