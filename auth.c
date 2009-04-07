@@ -188,18 +188,29 @@ int ProcessAuthenticaiton_WiredEthernet(const char *UserName, const char *Passwo
 		// 循环应答，另外处理认证失败信息和其他H3C自定义数据格式
 		for (;;)
 		{
-			retcode = pcap_next_ex(adhandle, &header, &captured);
-			assert(retcode==1||retcode==0);
-			if (retcode==0)
+			while((retcode=pcap_next_ex(adhandle, &header, &captured)) != 1)
 			{
-				DPRINTF("Error: Pcap timeout!\n");
-				DPRINTF("Press 'Enter' to reconnect; Press 'Ctrl-C' to quit.\n");
-				fprintf(stderr, "njit-client: 错误！服务器无响应或响应超时。\n");
-				fprintf(stderr, "             按Enter键重试，按Ctrl-C退出。\n");
-				// Note: 也有可能是网线没插好
-				while (getchar() != '\n')
-					;
-				goto START_AUTHENTICATION;
+				// 遇到捕获失败的情况，分析错误原因
+				DPRINTF("Warning: Failed to capture next packet\n");
+				DPRINTF("the return code of pcap_next_ex() is %d\n", retcode);
+				DPRINTF("Analizing: %s\n", pcap_lib_version());
+				if (retcode==0)//超时
+				{
+					DPRINTF("Return code 0 stands for timeout\n");
+					DPRINTF("We will ignore this case and continue to capture the next packet\n");
+					continue; // 继续捕获后续数据包
+				}
+				else if (retcode==-1)
+				{
+					DPRINTF("Return code -1 stands for a pcap error\n");
+					fprintf(stderr, "Pcap error: %s\n", errbuf);
+					exit(-1);
+				}
+				else
+				{
+					fprintf(stderr, "Unexpected return code %d\n", retcode);
+					exit(-1);
+				}
 			}
 
 			if ((EAP_Code)captured[18] == REQUEST)
