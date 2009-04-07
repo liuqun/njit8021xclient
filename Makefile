@@ -1,6 +1,8 @@
 CC := gcc
 CFLAGS := -g -Wall -Wextra -I.
-LDLIBS := -lgcrypt -lpcap
+LDLIBS := -lpcap
+CFLAGS += $(shell libgcrypt-config --cflags)
+LDLIBS += $(shell libgcrypt-config --libs)
 
 #------------------------------------
 all: njit-client
