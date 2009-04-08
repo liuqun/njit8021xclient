@@ -403,11 +403,11 @@ void SendResponseAvailable(pcap_t *handle, const uint8_t request[], const uint8_
 			// Type-Data
 			// {
 				i = 23;
+				response[i++] = 0x00;// 上报是否使用代理
 				response[i++] = 0x15;	  // 上传IP地址
 				response[i++] = 0x04;	  //
 				memcpy(response+i, ip, 4);//
 				i += 4;			  //
-				response[i++] = 0x00;// 上报是否使用代理
 				response[i++] = 0x06;		  // 携带版本号
 				response[i++] = 0x07;		  //
 				FillBase64Area((char*)response+i);//
