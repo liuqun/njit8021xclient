@@ -44,6 +44,9 @@ static void SendResponseAvailable(pcap_t *adhandle,
 		const uint8_t ethhdr[],
 		const uint8_t ip[4],
 		const char    username[]);
+static void SendResponseNotification(pcap_t *handle,
+		const uint8_t request[],
+		const uint8_t ethhdr[]);
 static int GetErrorCode(const uint8_t captured[]);
 static void DumpFailurePkt(const uint8_t captured[]);
 static void GetMacFromDevice(uint8_t mac[6], const char *devicename);
@@ -138,21 +141,9 @@ int ProcessAuthenticaiton_WiredEthernet(const char *UserName, const char *Passwo
 		// 若收到的第一个Request包是Notification，直接回答一个无附加内容的Notification包（iNode有附加内容）
 		if ((EAP_Type)captured[22] == NOTIFICATION)
 		{
-			uint8_t response[128]={0};
-			memcpy(response, ethhdr, 14);
 			DPRINTF("[%d] Server: Request Notification!\n", captured[19]);
-			// 填写Notification包并发送
-			response[14] = 0x01;
-			response[15] = 0x00;
-			response[16] = 0x00;
-			response[17] = 0x05;
-			response[18] = (EAP_Code) RESPONSE;
-			response[19] = (EAP_ID) captured[19];
-			response[20] = 0x00;
-			response[21] = 0x05;
-			response[22] = (EAP_Type) NOTIFICATION;
-			pcap_sendpacket(adhandle, response, 23);
-			DPRINTF("[%d] Client: Response Notification.\n", response[19]);
+			SendResponseNotification(adhandle, captured, ethhdr);// 填写Notification包并发送
+			DPRINTF("    Client: Response Notification.\n");
 
 			// 继续接收下一个Request包
 			retcode = pcap_next_ex(adhandle, &header, &captured);
@@ -233,6 +224,11 @@ int ProcessAuthenticaiton_WiredEthernet(const char *UserName, const char *Passwo
 					DPRINTF("[%d] Server: Request MD5-Challenge!\n", (EAP_ID)captured[19]);
 					SendResponseMD5(adhandle, captured, ethhdr, UserName, Password);
 					DPRINTF("[%d] Client: Response MD5-Challenge.\n", (EAP_ID)captured[19]);
+					break;
+				 case NOTIFICATION:
+					DPRINTF("[%d] Server: Request Notification!\n", captured[19]);
+					SendResponseNotification(adhandle, captured, ethhdr);
+					DPRINTF("     Client: Response Notification.\n");
 					break;
 				 default:
 					DPRINTF("[%d] Server: Request (type:%d)!\n", (EAP_ID)captured[19], (EAP_Type)captured[22]);
@@ -552,5 +548,36 @@ void SendLogoffPkt(pcap_t *handle, const uint8_t localmac[])
 
 	// 发包
 	pcap_sendpacket(handle, packet, sizeof(packet));
+}
+
+static
+void SendResponseNotification(pcap_t *handle, const uint8_t request[], const uint8_t ethhdr[])
+{
+	uint8_t	response[23];
+
+	assert((EAP_Code)request[18] == REQUEST);
+	assert((EAP_Type)request[22] == NOTIFICATION);
+
+	// Fill Ethernet header
+	memcpy(response, ethhdr, 14);
+
+	// 802,1X Authentication
+	// {
+		response[14] = 0x1;	// 802.1X Version 1
+		response[15] = 0x0;	// Type=0 (EAP Packet)
+		response[16] = 0x00;	// Length
+		response[17] = 0x05;	//
+
+		// Extensible Authentication Protocol
+		// {
+		response[18] = (EAP_Code) RESPONSE;	// Code
+		response[19] = (EAP_ID) request[19];	// ID
+		response[20] = response[16];		// Length
+		response[21] = response[17];		//
+		response[22] = (EAP_Type) NOTIFICATION;	// Type
+		// }
+	// }
+
+	pcap_sendpacket(handle, response, sizeof(response));
 }
 
