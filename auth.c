@@ -1,10 +1,9 @@
 /* File: auth.c
  * ------------
- * 由函数ProcessAuthenticaiton_WiredEthernet()执行801.1X认证
  */
 
-// 注：核心函数为
-int ProcessAuthenticaiton_WiredEthernet(const char *UserName, const char *Password, const char *DeviceName);
+// 注：核心函数为ProcessAuthenticaiton()，由该函数执行801.1X认证
+int Authenticaiton(const char *UserName, const char *Password, const char *DeviceName);
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,9 +28,9 @@ typedef enum {REQUEST=1, RESPONSE=2, SUCCESS=3, FAILURE=4, H3CDATA=10} EAP_Code;
 typedef enum {IDENTITY=1, NOTIFICATION=2, MD5=4, AVAILABLE=20} EAP_Type;
 typedef uint8_t EAP_ID;
 
-// 函数声明
+// 子函数声明
 static void SendStartPkt(pcap_t *adhandle, const uint8_t mac[]);
-//static void SendLogoffPkt(pcap_t *adhandle, const uint8_t mac[]);
+static void SendLogoffPkt(pcap_t *adhandle, const uint8_t mac[]);
 static void SendResponseIdentity(pcap_t *adhandle,
 			const uint8_t request[],
 			const uint8_t ethhdr[],
@@ -66,13 +65,12 @@ extern void GetIpFromDevice(uint8_t ip[4], const char DeviceName[]);
 
 
 /**
- * 函数：ProcessAuthenticaiton_WiredEthernet()
+ * 函数：Authenticaiton()
  *
- * Process 802.1X authentication through wired Ethernet
- * 使用以太网进行802.1X认证
+ * 使用以太网进行802.1X认证(802.1X authentication)
  */
 
-int ProcessAuthenticaiton_WiredEthernet(const char *UserName, const char *Password, const char *DeviceName)
+int Authenticaiton(const char *UserName, const char *Password, const char *DeviceName)
 {
 	char	errbuf[PCAP_ERRBUF_SIZE];
 	pcap_t	*adhandle;
@@ -512,8 +510,7 @@ void SendResponseMD5(pcap_t *handle, const uint8_t request[], const uint8_t ethh
 }
 
 
-//static
-void SendLogoffPkt(pcap_t *handle, const uint8_t localmac[])
+static void SendLogoffPkt(pcap_t *handle, const uint8_t localmac[])
 {
 	const uint8_t MultcastAddr[6] = {
 		0x01,0x80,0xc2,0x00,0x00,0x03
