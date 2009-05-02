@@ -49,8 +49,6 @@ static void SendResponseAvailable(pcap_t *adhandle,
 static void SendResponseNotification(pcap_t *handle,
 		const uint8_t request[],
 		const uint8_t ethhdr[]);
-static int GetErrorCode(const uint8_t captured[]);
-static void DumpFailurePkt(const uint8_t captured[]);
 static void GetMacFromDevice(uint8_t mac[6], const char *devicename);
 // From fillmd5.c
 extern void FillMD5Area(uint8_t digest[],
@@ -74,15 +72,14 @@ extern void GetIpFromDevice(uint8_t ip[4], const char DeviceName[]);
 int Authenticaiton(const char *UserName, const char *Password, const char *DeviceName)
 {
 	char	errbuf[PCAP_ERRBUF_SIZE];
-	pcap_t	*adhandle;
+	pcap_t	*adhandle; // adapter handle
 	uint8_t	MAC[6];
 	char	FilterStr[100];
 	struct bpf_program	fcode;
+	const int DefaultTimeout=60000;//设置接收超时参数，单位ms
 
-
-	/* 打开适配器 */
-	const int DefaultTimeOut=60000;//设置接收超时参数，单位ms
-	adhandle = pcap_open_live(DeviceName,65536,1,DefaultTimeOut,errbuf);
+	/* 打开适配器(网卡) */
+	adhandle = pcap_open_live(DeviceName,65536,1,DefaultTimeout,errbuf);
 	if (adhandle==NULL) {
 		fprintf(stderr, "%s\n", errbuf); 
 		exit(-1);
@@ -181,12 +178,12 @@ int Authenticaiton(const char *UserName, const char *Password, const char *Devic
 		// 进入循环体
 		for (;;)
 		{
-			// 调用pcap_next_ex()函数捕获数据包，直到成功捕获到一个数据包后跳出
+			// 调用pcap_next_ex()函数捕获数据包
 			while (pcap_next_ex(adhandle, &header, &captured) != 1)
-			{	DPRINTF(".");
-				sleep(1); // 若捕获失败则1秒后重试
+			{
+				DPRINTF("."); // 若捕获失败，则等1秒后重试
+				sleep(1);     // 直到成功捕获到一个数据包后再跳出
 			}
-			DPRINTF("\n");
 
 			// 根据收到的Request，回复相应的Response包
 			if ((EAP_Code)captured[18] == REQUEST)
@@ -224,28 +221,30 @@ int Authenticaiton(const char *UserName, const char *Password, const char *Devic
 			}
 			else if ((EAP_Code)captured[18] == FAILURE)
 			{	// 处理认证失败信息
-				int	errcode;
-				DPRINTF("[%d] Server: Failure.\n", captured[19]);
-				errcode = GetErrorCode(captured);
-				switch (errcode)
-				{
-				 case -1: // 被服务器踢下线后自动重连
+				uint8_t errtype = captured[22];
+				uint8_t msgsize = captured[23];
+				const char *msg = (const char*) &captured[24];
+				DPRINTF("[%d] Server: Failure.\n", (EAP_ID)captured[19]);
+				if (errtype==0x09 && msgsize>0)
+				{	// 输出错误提示消息
+					fprintf(stderr, "%s\n", msg);
+					// 已知的几种错误如下
+					// E2531:用户名不存在
+					// E2542:该用户帐号已经在别处登录
+					// E2547:接入时段限制
+					// E2553:密码错误
+					// E2602:认证会话不存在
+					// E3137:客户端版本号无效
+					exit(-1);
+				}
+				else if (errtype==0x08) // 可能网络无流量时服务器结束此次802.1X认证会话
+				{	// 遇此情况客户端立刻发起新的认证会话
 					goto START_AUTHENTICATION;
-					break;
-				 case -2:
-					DumpFailurePkt(captured);
+				}
+				else
+				{
+					DPRINTF("errtype=0x%02x\n", errtype);
 					exit(-1);
-					break;
-				 case 2531: // 用户名不存在
-				 case 2542: // 在线用户数量限制
-				 case 2547: // 接入时段限制
-				 case 2553: // 密码错误
-				 case 2602: // Session does not exist
-				 case 3137: // 客户端版本号错误
-				 default:   // 其他错误码
-					fprintf(stderr, "%s\n", captured+24);
-					exit(-1);
-					break;
 				}
 			}
 			else if ((EAP_Code)captured[18] == SUCCESS)
@@ -263,48 +262,6 @@ int Authenticaiton(const char *UserName, const char *Password, const char *Devic
 	return (0);
 }
 
-
-static
-int GetErrorCode(const uint8_t captured[])
-{
-	int errcode;
-
-	if (captured[22]==0x09)
-	{
-		sscanf((char*)captured+24, "E%4d: ", &errcode);
-		return (errcode);
-	}
-       	else if (captured[22]==0x08 && captured[23]==0x01)
-	{
-		return (-1);
-	}
-	else
-	{
-		return (-2);
-	}
-}
-
-
-static
-void DumpFailurePkt(const uint8_t captured[])
-{
-	int i;
-	uint16_t len;// length of H3C extra data in the 'Failure' packet
-
-	assert((EAP_Code)captured[18] == FAILURE);
-
-	memcpy(&len, captured+20, sizeof(len));
-	len = ntohs(len);
-	len -= 4;
-
-	fprintf(stderr, "Received 'Failure' packet with extra data %d Bytes:\n", len);
-	fprintf(stderr, " %02x %02x\n", captured[22], captured[23]);
-	for (i=2; i<len; i++)
-	{
-		fprintf(stderr, " %02x", captured[22+i]);
-	}
-	fprintf(stderr, "\n");
-}
 
 
 static
@@ -513,7 +470,8 @@ void SendResponseMD5(pcap_t *handle, const uint8_t request[], const uint8_t ethh
 }
 
 
-static void SendLogoffPkt(pcap_t *handle, const uint8_t localmac[])
+static
+void SendLogoffPkt(pcap_t *handle, const uint8_t localmac[])
 {
 	const uint8_t MultcastAddr[6] = {
 		0x01,0x80,0xc2,0x00,0x00,0x03
