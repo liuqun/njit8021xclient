@@ -1,7 +1,10 @@
 /* File: auth.c
  * ------------
- *
+ * 由函数ProcessAuthenticaiton_WiredEthernet()执行801.1X认证
  */
+
+// 注：核心函数为
+int ProcessAuthenticaiton_WiredEthernet(const char *UserName, const char *Password, const char *DeviceName);
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,6 +17,7 @@
 #include <pcap.h>
 
 #include <unistd.h>
+#include <sys/wait.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <net/if.h>
@@ -26,9 +30,8 @@ typedef enum {IDENTITY=1, NOTIFICATION=2, MD5=4, AVAILABLE=20} EAP_Type;
 typedef uint8_t EAP_ID;
 
 // 函数声明
-int ProcessAuthenticaiton_WiredEthernet(const char *UserName, const char *Password, const char *DeviceName);
 static void SendStartPkt(pcap_t *adhandle, const uint8_t mac[]);
-static void SendLogoffPkt(pcap_t *adhandle, const uint8_t mac[]);
+//static void SendLogoffPkt(pcap_t *adhandle, const uint8_t mac[]);
 static void SendResponseIdentity(pcap_t *adhandle,
 			const uint8_t request[],
 			const uint8_t ethhdr[],
@@ -60,7 +63,6 @@ extern void GetIpFromDevice(uint8_t ip[4], const char DeviceName[]);
 
 // 定义DPRINTF宏：输出调试信息
 #define DPRINTF(...)	fprintf(stderr, __VA_ARGS__)
-
 
 
 /**
@@ -179,31 +181,14 @@ int ProcessAuthenticaiton_WiredEthernet(const char *UserName, const char *Passwo
 		// 循环应答，另外处理认证失败信息和其他H3C自定义数据格式
 		for (;;)
 		{
-			while((retcode=pcap_next_ex(adhandle, &header, &captured)) != 1)
-			{
-				// 遇到捕获失败的情况，分析错误原因
-				DPRINTF("Warning: Failed to capture next packet\n");
-				DPRINTF("the return code of pcap_next_ex() is %d\n", retcode);
-				DPRINTF("Analizing: %s\n", pcap_lib_version());
-				if (retcode==0)//超时
-				{
-					DPRINTF("Return code 0 stands for timeout\n");
-					DPRINTF("We will ignore this case and continue to capture the next packet\n");
-					continue; // 继续捕获后续数据包
-				}
-				else if (retcode==-1)
-				{
-					DPRINTF("Return code -1 stands for a pcap error\n");
-					fprintf(stderr, "Pcap error: %s\n", errbuf);
-					exit(-1);
-				}
-				else
-				{
-					fprintf(stderr, "Unexpected return code %d\n", retcode);
-					exit(-1);
-				}
+			// 调用pcap_next_ex()函数捕获数据包，直到成功捕获到一个数据包后跳出
+			while (pcap_next_ex(adhandle, &header, &captured) != 1)
+			{	DPRINTF(".");
+				sleep(1); // 若捕获失败则1秒后重试
 			}
+			DPRINTF("\n");
 
+			// 根据收到的Request，回复相应的Response包
 			if ((EAP_Code)captured[18] == REQUEST)
 			{
 				switch ((EAP_Type)captured[22])
@@ -527,7 +512,7 @@ void SendResponseMD5(pcap_t *handle, const uint8_t request[], const uint8_t ethh
 }
 
 
-static
+//static
 void SendLogoffPkt(pcap_t *handle, const uint8_t localmac[])
 {
 	const uint8_t MultcastAddr[6] = {
@@ -580,4 +565,5 @@ void SendResponseNotification(pcap_t *handle, const uint8_t request[], const uin
 
 	pcap_sendpacket(handle, response, sizeof(response));
 }
+
 
