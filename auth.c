@@ -1,8 +1,8 @@
 /* File: auth.c
  * ------------
+ * 注：核心函数为Authenticaiton()，由该函数执行801.1X认证
  */
 
-// 注：核心函数为ProcessAuthenticaiton()，由该函数执行801.1X认证
 int Authenticaiton(const char *UserName, const char *Password, const char *DeviceName);
 
 #include <stdio.h>
@@ -67,7 +67,8 @@ extern void GetIpFromDevice(uint8_t ip[4], const char DeviceName[]);
 /**
  * 函数：Authenticaiton()
  *
- * 使用以太网进行802.1X认证(802.1X authentication)
+ * 使用以太网进行802.1X认证(802.1X Authentication)
+ * 该函数将不断循环，应答802.1X认证会话，直到遇到错误后才退出
  */
 
 int Authenticaiton(const char *UserName, const char *Password, const char *DeviceName)
@@ -176,7 +177,8 @@ int Authenticaiton(const char *UserName, const char *Password, const char *Devic
 			captured[6],captured[7],captured[8],captured[9],captured[10],captured[11]);
 		pcap_compile(adhandle, &fcode, FilterStr, 1, 0xff);
 		pcap_setfilter(adhandle, &fcode);
-		// 循环应答，另外处理认证失败信息和其他H3C自定义数据格式
+
+		// 进入循环体
 		for (;;)
 		{
 			// 调用pcap_next_ex()函数捕获数据包，直到成功捕获到一个数据包后跳出
@@ -221,7 +223,7 @@ int Authenticaiton(const char *UserName, const char *Password, const char *Devic
 				}
 			}
 			else if ((EAP_Code)captured[18] == FAILURE)
-			{
+			{	// 处理认证失败信息
 				int	errcode;
 				DPRINTF("[%d] Server: Failure.\n", captured[19]);
 				errcode = GetErrorCode(captured);
@@ -249,11 +251,12 @@ int Authenticaiton(const char *UserName, const char *Password, const char *Devic
 			else if ((EAP_Code)captured[18] == SUCCESS)
 			{
 				DPRINTF("[%d] Server: Success.\n", captured[19]);
+				// TODO: 尚未实现“自动获取动态分配的IP地址”这一关键功能
 			}
 			else
 			{
 				DPRINTF("[%d] Server: (H3C data)\n", captured[19]);
-				// TODO: Examine H3C data packet
+				// TODO: 这里没有处理华为自定义数据包 
 			}
 		}
 	}
