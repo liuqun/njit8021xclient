@@ -20,7 +20,7 @@ http://groups.google.com/group/njit8021xclient?hl=zh-CN
 
 [使用方法]
 假设您的Linux系统里的普通用户名为liuqun，内网802.1X帐号为s-12345、密码为abcde
-一、把可执行文件njit-client拷贝到用户主目录(假设为/home/liuqun目录).
+一、把可执行文件njit-client和njit-RefreshIP拷贝到用户主目录(假设为/home/liuqun目录).
 二、从开始菜单里找到“终端”，打开后进入命令提示符窗口
 三、通过命令行切换为root并运行njit-client程序
     Ubuntu下命令格式为：
@@ -40,21 +40,22 @@ http://groups.google.com/group/njit8021xclient?hl=zh-CN
 [3] Server: Request MD5-Challenge!
 [3] Client: Response MD5-Challenge.
 [4] Server: (H3C data)
+[4] Server: Success.
+Activate network connetion "System eth0"
+	/org/freedesktop/NetworkManagerSettings/0
+Using network interface "eth0"
+	/org/freedesktop/Hal/devices/net_00_16_36_52_53_12
 [5] Server: (H3C data)
-[5] Server: Success.
-[6] Server: (H3C data)
 [1] Server: Request Identity!
 [1] Client: Response Identity.
-[7] Server: (H3C data)
-[8] Server: Request Identity!
-[8] Client: Response Identity.
-[1] Server: Request Identity!
-[1] Client: Response Identity.
-[9] Server: Request Identity!
-[9] Client: Response Identity.
+[6] Server: Request Identity!
+[6] Client: Response Identity.
 
-五、如果你们学校配置了动态分配IP地址，则通常还要点击桌面托盘里的网络链接图标，
-    选“Auto eth0”（或“System eth0”）。这一步实际是让操作系统获取动态分配的IP地址，之后应该就可以上网了。
+
+
+五、如果你们学校配置的是动态分配IP地址，客户端程序会自动通知操作系统获取IP地址。
+    但如果学校分配的是静态IP地址，则还需要手动设置。
+    如果你需要帮助，请联系校园网802.1X客户端开发小组（发送Email至： njit8021xclient@googlegroups.com ）
 
 
 
