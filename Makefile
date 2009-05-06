@@ -15,7 +15,7 @@ njit-client: main.o auth.o fillmd5.o fillbase64.o ip.o
 	$(COMPILE.c) $< -o $@
 %.o: %.c
 	$(COMPILE.c) $< -o $@
-njit-RefreshIP: RefreshIP.sh
+njit-RefreshIP: RefreshIP.py
 	cat $< > $@
 	chmod +x $@
 #------------------------------------
