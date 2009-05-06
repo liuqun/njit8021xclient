@@ -4,31 +4,32 @@
 import dbus
 SystemBus = dbus.SystemBus()
 
-# 查找网卡设备
+# 查找网卡接口
 oNetworkManager = SystemBus.get_object('org.freedesktop.NetworkManager', '/org/freedesktop/NetworkManager')
-DeviceList = dbus.Interface(oNetworkManager, 'org.freedesktop.NetworkManager').GetDevices()
-for device in DeviceList:
-	oDevice = SystemBus.get_object('org.freedesktop.Hal', device)
-	DeviceName = dbus.Interface(oDevice, 'org.freedesktop.Hal.Device').GetPropertyString('net.interface')
-	if DeviceName == 'eth0':
+szDeviceList = dbus.Interface(oNetworkManager, 'org.freedesktop.NetworkManager').GetDevices()
+for szDevice in szDeviceList:
+	oDevice = SystemBus.get_object('org.freedesktop.Hal', szDevice)
+	szNetworkInterface = dbus.Interface(oDevice, 'org.freedesktop.Hal.Device').GetPropertyString('net.interface')
+	if szNetworkInterface == 'eth0':
 		break
 
 # 查找连接
 oNetworkManagerSystemSettings = SystemBus.get_object('org.freedesktop.NetworkManagerSystemSettings', '/org/freedesktop/NetworkManagerSettings')
-ConnnectionList = dbus.Interface(oNetworkManagerSystemSettings, 'org.freedesktop.NetworkManagerSettings').ListConnections()
-for connection in ConnnectionList:
-	oConnection = SystemBus.get_object('org.freedesktop.NetworkManagerSystemSettings', connection)
-	settings = dbus.Interface(oConnection, 'org.freedesktop.NetworkManagerSettings.Connection').GetSettings()
-	ConnectionID = settings.get('connection').get('id')
-	if ConnectionID == 'System eth0' or ConnectionID == 'Auto eth0':
+szConnnectionList = dbus.Interface(oNetworkManagerSystemSettings, 'org.freedesktop.NetworkManagerSettings').ListConnections()
+for szConnection in szConnnectionList:
+	oConnection = SystemBus.get_object('org.freedesktop.NetworkManagerSystemSettings', szConnection)
+	szConnectionID = dbus.Interface(oConnection, 'org.freedesktop.NetworkManagerSettings.Connection').GetSettings().get('connection').get('id')
+	if szConnectionID == 'System eth0' or szConnectionID == 'Auto eth0':
 		break
 
 # 激活网络接口
-dbus.Interface(oNetworkManager, 'org.freedesktop.NetworkManager').ActivateConnection('org.freedesktop.NetworkManagerSystemSettings', connection, device, '/')
+dbus.Interface(oNetworkManager, 'org.freedesktop.NetworkManager').ActivateConnection('org.freedesktop.NetworkManagerSystemSettings', szConnection, szDevice, '/')
 
 # 输出调试信息
-DEBUG_MODE = 1
-if DEBUG_MODE:
-	print 'Network Connetion "' + ConnectionID + '":\t' + connection
-	print 'Network interface "' + DeviceName + '":\t\t' + device
+PRINT_DEBUG_MESSAGES = 1
+if PRINT_DEBUG_MESSAGES:
+	print 'Activate network connetion "' + szConnectionID + '"'
+	print '\t' + szConnection
+	print 'Using network interface "' + szNetworkInterface + '"'
+	print '\t' + szDevice
 
