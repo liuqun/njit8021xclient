@@ -27,6 +27,7 @@ int Authenticaiton(const char *UserName, const char *Password, const char *Devic
 typedef enum {REQUEST=1, RESPONSE=2, SUCCESS=3, FAILURE=4, H3CDATA=10} EAP_Code;
 typedef enum {IDENTITY=1, NOTIFICATION=2, MD5=4, AVAILABLE=20} EAP_Type;
 typedef uint8_t EAP_ID;
+const uint8_t MultcastAddr[6] = {0x01,0x80,0xc2,0x00,0x00,0x03}; // 多播地址
 
 // 子函数声明
 static void SendStartPkt(pcap_t *adhandle, const uint8_t mac[]);
@@ -131,7 +132,7 @@ int Authenticaiton(const char *UserName, const char *Password, const char *Devic
 		assert((EAP_Code)captured[18] == REQUEST);
 
 		// 填写应答包的Ethernet Header（14字节），以后无须再修改
-		memcpy(ethhdr+0, captured+6, 6);
+		memcpy(ethhdr+0, MultcastAddr, 6); // 总是以多播发送数据包（zyp.ishere@gmail.com）
 		memcpy(ethhdr+6, MAC, 6);
 		ethhdr[12] = 0x88;
 		ethhdr[13] = 0x8e;
@@ -293,9 +294,6 @@ void GetMacFromDevice(uint8_t mac[6], const char *devicename)
 static
 void SendStartPkt(pcap_t *handle, const uint8_t localmac[])
 {
-	const uint8_t MultcastAddr[6] = {
-		0x01,0x80,0xc2,0x00,0x00,0x03
-	};
 	uint8_t packet[18];
 
 	// Ethernet Header (14 Bytes)
@@ -474,9 +472,6 @@ void SendResponseMD5(pcap_t *handle, const uint8_t request[], const uint8_t ethh
 static
 void SendLogoffPkt(pcap_t *handle, const uint8_t localmac[])
 {
-	const uint8_t MultcastAddr[6] = {
-		0x01,0x80,0xc2,0x00,0x00,0x03
-	};
 	uint8_t packet[18];
 
 	// Ethernet Header (14 Bytes)
