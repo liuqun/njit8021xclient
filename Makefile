@@ -5,7 +5,7 @@ CFLAGS += $(shell libgcrypt-config --cflags)
 LDLIBS += $(shell libgcrypt-config --libs)
 
 #------------------------------------
-all: njit-client njit-RefreshIP
+all: njit-client njit-RefreshIP Version.log
 
 
 #------------------------------------
@@ -15,14 +15,20 @@ njit-client: main.o auth.o fillmd5.o fillbase64.o ip.o
 	$(COMPILE.c) $< -o $@
 %.o: %.c
 	$(COMPILE.c) $< -o $@
-njit-RefreshIP:
-	ln -s RefreshIP.sh $@
+njit-RefreshIP: RefreshIP.sh
+	cat $< > $@
 	chmod +x $@
 #------------------------------------
-# 可以使用make build.log收集编译信息
-build.log: njit-client
-	@echo "Build Date: " `date` > $@
-	@echo "C Compiler: " `$(CC) --version | head -n 1`>> $@
-	@echo "CFLAGS:     " $(CFLAGS) >> $@
-	@echo "LDLIBS:     " $(LDLIBS) >> $@
-
+# 生成编译日志
+Version.log: njit-client
+	@echo "==========================================================" >  $@
+	@echo "编译者：$(shell grep `whoami` /etc/passwd | cut -d : -f 5)" >> $@
+	@echo "日  期：$(shell date '+%Y年%m月%d日')"                      >> $@
+	@echo "----------------------------------------------------------" >> $@
+	@echo "编译器：$(shell $(CC) --version | head -n 1)"               >> $@
+	@echo "        CFLAGS = $(CFLAGS)"                                 >> $@
+	@echo "        LDLIBS = $(LDLIBS)"                                 >> $@
+	@echo "动态链接库："                                               >> $@
+	@ldd  $<                                                           >> $@
+	@echo "==========================================================" >> $@
+	@cat $@
