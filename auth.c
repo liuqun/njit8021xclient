@@ -250,7 +250,8 @@ int Authenticaiton(const char *UserName, const char *Password, const char *Devic
 			else if ((EAP_Code)captured[18] == SUCCESS)
 			{
 				DPRINTF("[%d] Server: Success.\n", captured[19]);
-				// TODO: 尚未实现“自动获取动态分配的IP地址”这一关键功能
+				// 刷新IP地址
+				system("./njit-RefreshIP");
 			}
 			else
 			{

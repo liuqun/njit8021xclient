@@ -5,7 +5,7 @@ CFLAGS += $(shell libgcrypt-config --cflags)
 LDLIBS += $(shell libgcrypt-config --libs)
 
 #------------------------------------
-all: njit-client
+all: njit-client njit-RefreshIP
 
 
 #------------------------------------
@@ -15,7 +15,9 @@ njit-client: main.o auth.o fillmd5.o fillbase64.o ip.o
 	$(COMPILE.c) $< -o $@
 %.o: %.c
 	$(COMPILE.c) $< -o $@
-
+njit-RefreshIP:
+	ln -s RefreshIP.sh $@
+	chmod +x $@
 #------------------------------------
 # 可以使用make build.log收集编译信息
 build.log: njit-client
