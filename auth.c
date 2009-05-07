@@ -85,6 +85,8 @@ int Authenticaiton(const char *UserName, const char *Password, const char *Devic
 	struct bpf_program	fcode;
 	const int DefaultTimeout=60000;//设置接收超时参数，单位ms
 
+	// NOTE: 这里没有检查网线是否已插好,网线插口可能接触不良
+	
 	/* 打开适配器(网卡) */
 	adhandle = pcap_open_live(DeviceName,65536,1,DefaultTimeout,errbuf);
 	if (adhandle==NULL) {
@@ -111,43 +113,40 @@ int Authenticaiton(const char *UserName, const char *Password, const char *Devic
 		int retcode;
 		struct pcap_pkthdr *header;
 		const uint8_t	*captured;
-		uint8_t	ethhdr[14]={0};
-		uint8_t	ip[4]={0};
+		uint8_t	ethhdr[14]={0}; // ethernet header
+		uint8_t	ip[4]={0};	// ip address
+
+		// 填写报头(以后无须再修改)
+		memcpy(ethhdr+0, MultcastAddr, 6); // 注：默认以多播方式发送数据包
+		memcpy(ethhdr+6, MAC, 6);
+		ethhdr[12] = 0x88;
+		ethhdr[13] = 0x8e;
 
 		/* 主动发起认证会话 */
 		SendStartPkt(adhandle, MAC);
 		DPRINTF("[ ] Client: Start.\n");
 
-		/* 接收来自认证服务器的数据并应答 */
-
-		// 接收第一个Request包
-		retcode = pcap_next_ex(adhandle, &header, &captured);
-		assert(retcode==1||retcode==0);
-		if (retcode==0)
+		/* 等待认证服务器的回应 */
+		bool serverIsFound = false;
+		while (!serverIsFound)
 		{
-			DPRINTF("Error: Pcap timeout!\n");
-			DPRINTF("Press 'Enter' to reconnect; Press 'Ctrl-C' to quit.\n");
-			fprintf(stderr, "njit-client: 错误！服务器无响应或响应超时。\n");
-			fprintf(stderr, "             按Enter键重试，按Ctrl-C退出。\n");
-			// Note: 也有可能是网线没插好
-			while (getchar() != '\n')
-				;
-			goto START_AUTHENTICATION;
+			retcode = pcap_next_ex(adhandle, &header, &captured);
+			if (retcode==1 && (EAP_Code)captured[18]==REQUEST)
+				serverIsFound = true;
+			else
+			{	// 延时后重试
+				sleep(1); DPRINTF(".");
+				SendStartPkt(adhandle, MAC);
+				// NOTE: 这里没有检查网线是否接触不良或已被拔下
+			}
 		}
 
-		assert((EAP_Code)captured[18] == REQUEST);
-
-		// 填写应答包的Ethernet Header（14字节），以后无须再修改
-		memcpy(ethhdr+0, MultcastAddr, 6); // 总是以多播发送数据包（zyp.ishere@gmail.com）
-		memcpy(ethhdr+6, MAC, 6);
-		ethhdr[12] = 0x88;
-		ethhdr[13] = 0x8e;
-
-		// 若收到的第一个Request包是Notification，直接回答一个无附加内容的Notification包（iNode有附加内容）
+		// 若收到的第一个包是Request Notification
 		if ((EAP_Type)captured[22] == NOTIFICATION)
 		{
 			DPRINTF("[%d] Server: Request Notification!\n", captured[19]);
-			SendResponseNotification(adhandle, captured, ethhdr);// 填写Notification包并发送
+			// 发送Response Notification
+			SendResponseNotification(adhandle, captured, ethhdr);
 			DPRINTF("    Client: Response Notification.\n");
 
 			// 继续接收下一个Request包
@@ -156,25 +155,22 @@ int Authenticaiton(const char *UserName, const char *Password, const char *Devic
 			assert((EAP_Code)captured[18] == REQUEST);
 		}
 
-		// 回答第一个Request Identity / Request AVAILABLE包时需要特殊处理
-		// （都要回答Response Identity包）
+		// 遇到AVAILABLE包时需要特殊处理
 		if ((EAP_Type)captured[22] == IDENTITY)
-		{	// 南京工程学院目前使用的格式
+		{	// 通常情况下收到应是Request Identity
 			DPRINTF("[%d] Server: Request Identity!\n", captured[19]);
+			GetIpFromDevice(ip, DeviceName);
+			SendResponseIdentity(adhandle, captured, ethhdr, ip, UserName);
+			DPRINTF("[%d] Client: Response Identity.\n", (EAP_ID)captured[19]);
 		}
 		else if ((EAP_Type)captured[22] == AVAILABLE)
-		{	// 中南财经政法大学目前使用的格式
+		{	// 中南财经政法大学目前使用的格式：
+			// 收到第一个Request AVAILABLE时要回答Response Identity
 			DPRINTF("[%d] Server: Request AVAILABLE!\n", captured[19]);
+			GetIpFromDevice(ip, DeviceName);
+			SendResponseIdentity(adhandle, captured, ethhdr, ip, UserName);
+			DPRINTF("[%d] Client: Response Identity.\n", (EAP_ID)captured[19]);
 		}
-		else
-		{
-			DPRINTF("[%d] Server: Request (type:%d)!\n", captured[19], (EAP_Type)captured[22]);
-			DPRINTF("Error! Unexpected request type\n");
-			exit(-1);
-		}
-		GetIpFromDevice(ip, DeviceName);
-		SendResponseIdentity(adhandle, captured, ethhdr, ip, UserName);
-		DPRINTF("[%d] Client: Response Identity.\n", (EAP_ID)captured[19]);
 
 		// 重设过滤器，只捕获华为802.1X认证设备发来的包（包括多播Request Identity / Request AVAILABLE）
 		sprintf(FilterStr, "(ether proto 0x888e) and (ether src host %02x:%02x:%02x:%02x:%02x:%02x)",
@@ -190,6 +186,7 @@ int Authenticaiton(const char *UserName, const char *Password, const char *Devic
 			{
 				DPRINTF("."); // 若捕获失败，则等1秒后重试
 				sleep(1);     // 直到成功捕获到一个数据包后再跳出
+				// NOTE: 这里没有检查网线是否已被拔下或插口接触不良
 			}
 
 			// 根据收到的Request，回复相应的Response包
