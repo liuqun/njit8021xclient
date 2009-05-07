@@ -231,6 +231,7 @@ int Authenticaiton(const char *UserName, const char *Password, const char *Devic
 					fprintf(stderr, "%s\n", msg);
 					// 已知的几种错误如下
 					// E2531:用户名不存在
+					// E2535:Service is paused
 					// E2542:该用户帐号已经在别处登录
 					// E2547:接入时段限制
 					// E2553:密码错误
@@ -489,10 +490,62 @@ void SendLogoffPkt(pcap_t *handle, const uint8_t localmac[])
 	pcap_sendpacket(handle, packet, sizeof(packet));
 }
 
+
+// 函数: XOR(data[], datalen, key[], keylen)
+//
+// 使用密钥key[]对数据data[]进行异或加密
+//（注：该函数也可反向用于解密）
+static
+void XOR(uint8_t data[], unsigned dlen, const char key[], unsigned klen)
+{
+	unsigned int	i,j;
+
+	// 先按正序处理一遍
+	for (i=0; i<dlen; i++)
+		data[i] ^= key[i%klen];
+	// 再按倒序处理第二遍
+	for (i=dlen-1,j=0;  j<dlen;  i--,j++)
+		data[i] ^= key[j%klen];
+}
+
+
+const char H3C_VERSION[16]="EN V2.40-0335"; // 华为客户端版本号
+const char H3C_KEY[]      ="HuaWei3COM1X";  // H3C的固定密钥
+
+void FillClientVersionArea(uint8_t area[20])
+{
+	uint32_t random;
+	char	 RandomKey[8+1];
+
+	random = (uint32_t) time(NULL);    // 注：可以选任意32位整数
+	sprintf(RandomKey, "%08x", random);// 生成RandomKey[]字符串
+
+	// 第一轮异或运算，以RandomKey为密钥加密16字节
+	memcpy(area, H3C_VERSION, sizeof(H3C_VERSION));
+	XOR(area, 16, RandomKey, strlen(RandomKey));
+
+	// 此16字节加上4字节的random，组成总计20字节
+	random = htonl(random); // （需调整为网络字节序）
+	memcpy(area+16, &random, 4);
+
+	// 第二轮异或运算，以H3C_KEY为密钥加密前面生成的20字节
+	XOR(area, 20, H3C_KEY, strlen(H3C_KEY));
+}
+
+
+
+void FillWindowsVersionArea(uint8_t area[20])
+{
+	const uint8_t WinVersion[20] = "r70393861";
+
+	memcpy(area, WinVersion, 20);
+	XOR(area, 20, H3C_KEY, strlen(H3C_KEY));
+}
+
 static
 void SendResponseNotification(pcap_t *handle, const uint8_t request[], const uint8_t ethhdr[])
 {
-	uint8_t	response[23];
+	uint8_t	response[67];
 
 	assert((EAP_Code)request[18] == REQUEST);
 	assert((EAP_Type)request[22] == NOTIFICATION);
@@ -505,7 +558,7 @@ void SendResponseNotification(pcap_t *handle, const uint8_t request[], const uin
 		response[14] = 0x1;	// 802.1X Version 1
 		response[15] = 0x0;	// Type=0 (EAP Packet)
 		response[16] = 0x00;	// Length
-		response[17] = 0x05;	//
+		response[17] = 0x31;	//
 
 		// Extensible Authentication Protocol
 		// {
@@ -514,6 +567,20 @@ void SendResponseNotification(pcap_t *handle, const uint8_t request[], const uin
 		response[20] = response[16];		// Length
 		response[21] = response[17];		//
 		response[22] = (EAP_Type) NOTIFICATION;	// Type
+
+		int i=23;
+		/* Notification Data (44 Bytes) */
+		// 其中前2+20字节为客户端版本
+		response[i++] = 0x01; // type 0x01
+		response[i++] = 22;   // lenth
+		FillClientVersionArea(response+i);
+		i += 20;
+
+		// 最后2+20字节存储加密后的Windows操作系统版本号
+		response[i++] = 0x02; // type 0x02
+		response[i++] = 22;   // length
+		FillWindowsVersionArea(response+i);
+		i += 20;
 		// }
 	// }
 
