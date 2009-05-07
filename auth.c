@@ -28,6 +28,8 @@ typedef enum {REQUEST=1, RESPONSE=2, SUCCESS=3, FAILURE=4, H3CDATA=10} EAP_Code;
 typedef enum {IDENTITY=1, NOTIFICATION=2, MD5=4, AVAILABLE=20} EAP_Type;
 typedef uint8_t EAP_ID;
 const uint8_t MultcastAddr[6] = {0x01,0x80,0xc2,0x00,0x00,0x03}; // 多播地址
+const char H3C_VERSION[16]="EN V2.40-0335"; // 华为客户端版本号
+const char H3C_KEY[]      ="HuaWei3COM1X";  // H3C的固定密钥
 
 // 子函数声明
 static void SendStartPkt(pcap_t *adhandle, const uint8_t mac[]);
@@ -50,12 +52,16 @@ static void SendResponseAvailable(pcap_t *adhandle,
 static void SendResponseNotification(pcap_t *handle,
 		const uint8_t request[],
 		const uint8_t ethhdr[]);
+
 static void GetMacFromDevice(uint8_t mac[6], const char *devicename);
+
+static void FillClientVersionArea(uint8_t area[]);
+static void FillWindowsVersionArea(uint8_t area[]);
+static void FillBase64Area(char area[]);
 // From fillmd5.c
 extern void FillMD5Area(uint8_t digest[],
 	       	uint8_t id, const char passwd[], const uint8_t srcMD5[]);
-// From fillbase64.c
-extern void FillBase64Area(char area[]);
+
 // From ip.c
 extern void GetIpFromDevice(uint8_t ip[4], const char DeviceName[]);
 
@@ -509,9 +515,8 @@ void XOR(uint8_t data[], unsigned dlen, const char key[], unsigned klen)
 }
 
 
-const char H3C_VERSION[16]="EN V2.40-0335"; // 华为客户端版本号
-const char H3C_KEY[]      ="HuaWei3COM1X";  // H3C的固定密钥
 
+static
 void FillClientVersionArea(uint8_t area[20])
 {
 	uint32_t random;
@@ -533,7 +538,7 @@ void FillClientVersionArea(uint8_t area[20])
 }
 
 
-
+static
 void FillWindowsVersionArea(uint8_t area[20])
 {
 	const uint8_t WinVersion[20] = "r70393861";
@@ -587,4 +592,38 @@ void SendResponseNotification(pcap_t *handle, const uint8_t request[], const uin
 	pcap_sendpacket(handle, response, sizeof(response));
 }
 
+
+static
+void FillBase64Area(char area[])
+{
+	uint8_t version[20];
+	const char Tbl[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+			   "abcdefghijklmnopqrstuvwxyz"
+			   "0123456789+/"; // 标准的Base64字符映射表
+	uint8_t	c1,c2,c3;
+	int	i, j;
+
+	// 首先生成20字节加密过的H3C版本号信息
+	FillClientVersionArea(version);
+
+	// 然后按照Base64编码法将前面生成的20字节数据转换为28字节ASCII字符
+	i = 0;
+	j = 0;
+	while (j < 24)
+	{
+		c1 = version[i++];
+		c2 = version[i++];
+		c3 = version[i++];
+		area[j++] = Tbl[ (c1&0xfc)>>2                               ];
+		area[j++] = Tbl[((c1&0x03)<<4)|((c2&0xf0)>>4)               ];
+		area[j++] = Tbl[               ((c2&0x0f)<<2)|((c3&0xc0)>>6)];
+		area[j++] = Tbl[                                c3&0x3f     ];
+	}
+	c1 = version[i++];
+	c2 = version[i++];
+	area[24] = Tbl[ (c1&0xfc)>>2 ];
+	area[25] = Tbl[((c1&0x03)<<4)|((c2&0xf0)>>4)];
+	area[26] = Tbl[               ((c2&0x0f)<<2)];
+	area[27] = '=';
+}
 

@@ -9,7 +9,7 @@ all: njit-client njit-RefreshIP Version.log
 
 
 #------------------------------------
-njit-client: main.o auth.o fillmd5.o fillbase64.o ip.o
+njit-client: main.o auth.o fillmd5.o ip.o
 	$(LINK.o) $^ $(LDLIBS) -o $@
 %.o: %.c %.h
 	$(COMPILE.c) $< -o $@
