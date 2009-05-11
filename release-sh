@@ -1,0 +1,25 @@
+#!/bin/sh
+
+VERSION=$1
+ARCH=i386
+CFLAGS='-m32 -O2 -D NDEBUG'
+PACKAGE=njit8021xclient-$VERSION-$ARCH
+SOURCE_DIR=`pwd`
+OUTPUT_DIR=`pwd`/$PACKAGE
+
+echo "Building..."
+mkdir -p $OUTPUT_DIR && \
+cd $OUTPUT_DIR       && \
+env VPATH="$SOURCE_DIR" CFLAGS="$CFLAGS" \
+make all clean --quiet --always-make --makefile=$SOURCE_DIR/Makefile
+
+# if $? == 0 ; then
+echo "Build Successful."
+# else
+# echo "Build Faild!"
+# fi
+
+echo "Tarballing..."
+cp $SOURCE_DIR/ReadMe.html ./
+tar --create --gzip --file=$PACKAGE.tgz *
+echo "Done."
