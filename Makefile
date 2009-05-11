@@ -20,7 +20,7 @@
 
 # 如果没有从命令行指定编译选项，默认情况下将开启调试选项、关闭所有编译优化、优先链接动态链接库。
 CFLAGS ?= -g -O0
-LDFLAGS?= -shared
+#LDFLAGS?=
 
 # 总是开启所有编译器警告选项
 CFLAGS += -Wall -Wextra
@@ -68,7 +68,7 @@ Build.log:
 	@echo "        LDFLAGS= $(LDFLAGS)"                                >> $@
 	@echo "        LDLIBS = $(LDLIBS)"                                 >> $@
 	@echo "动态链接库："                                               >> $@
-	@ldd  njit-client                                                  >> $@
+	-@ldd  njit-client                                                 >> $@
 	@echo "==========================================================" >> $@
 	cat $@
 #------------------------------------
