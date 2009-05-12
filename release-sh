@@ -1,25 +1,92 @@
 #!/bin/sh
+#
+# Usage:
+#	./release-sh  [版本号]  [硬件架构]
 
-VERSION=$1
-ARCH=i386
-CFLAGS='-m32 -O2 -D NDEBUG'
+
+# 检查从命令行指定的版本号参数
+if [ -n "$1" ] ; then
+	VERSION=$1
+else
+	VERSION=`whoami``date '+%Y%m%d'`
+fi
+
+
+# 检查目标机硬件架构
+if [ -n "$2" ] ; then
+	ARCH=$2
+else
+	ARCH=`uname --machine` # 未指定硬件架构时，自动为本机进行编译
+fi
+
+CC=cc
+case $ARCH in
+    i[3-6]86 ) # 32位PC机
+	CFLAGS="-march=$ARCH -D NDEBUG"
+	break
+	;;
+    x86_64|amd64) # AMD64位PC机
+	echo "Warning: Build for $ARCH has not been fully supported yet."
+	echo "Contact the authors for more infomation. (See ReadMe.html)"
+	CFLAGS="-m64 -D NDEBUG"
+	break
+	;;
+    mips) # MIPS内核的路由器(或龙芯PC机?)
+	echo "Warning: Build for $ARCH has not been fully supported yet."
+	echo "Contact the authors for more infomation. (See ReadMe.html)"
+	CC=mipsel-linux-uclibc-gcc
+	CFLAGS="-D NDEBUG"
+	break
+	;;
+    arm[7,9])	# 为ARM 7、9编译
+	;;	# （尚未实现）
+    ia64)	# 为Intel安腾64位机编译
+	;;	# （尚待实现）
+    *)	# 其他未知的硬件架构
+	echo "Sorry! Build for $ARCH architecture has not been fully supported yet."
+	echo "Maybe you can help us handling this problem?"
+	echo "Contact the authors for more infomation. (See ReadMe.html)"
+	echo "Suggestions will always be welcomed!"
+	exit 255
+	;;
+esac
+
 PACKAGE=njit8021xclient-$VERSION-$ARCH
 SOURCE_DIR=`pwd`
 OUTPUT_DIR=`pwd`/$PACKAGE
 
+echo "Package name: $Package"
+echo "Source directory: $SOURCE_DIR"
+echo "Output directory: $OUTPUT_DIR"
+echo "CC=$CC"
+echo "CFLAGS=\"$CFLAGS\""
+echo "LDFLAGS=\"$LDFLAGS\""
+echo "LDLIBS=\"$LDLIBS\""
+
+# 从输出目录调用make进行编译
 echo "Building..."
 mkdir -p $OUTPUT_DIR && \
 cd $OUTPUT_DIR       && \
-env VPATH="$SOURCE_DIR" CFLAGS="$CFLAGS" \
+env VPATH="$SOURCE_DIR" CC=$CC CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS" LDLIBS="$LDLIBS"	\
 make all clean --quiet --always-make --makefile=$SOURCE_DIR/Makefile
 
-# if $? == 0 ; then
-echo "Build Successful."
-# else
-# echo "Build Faild!"
-# fi
+if [ $? -eq 0 ] ; then
+	echo "Build Successful."
+else
+	echo "Build Faild!"
+	exit 255
+fi
 
-echo "Tarballing..."
-cp $SOURCE_DIR/ReadMe.html ./
-tar --create --gzip --file=$PACKAGE.tgz *
-echo "Done."
+
+# 压缩打包
+TARBALL=$PACKAGE.tgz
+cd $OUTPUT_DIR/..				&& \
+cp $SOURCE_DIR/ReadMe.html $OUTPUT_DIR/		&& \
+tar --create --gzip --file=$TARBALL $OUTPUT_DIR
+
+if [ $? -eq 0 ] ; then
+	echo "Created tarball: $TARBALL"
+else
+	echo "Error: Failed to create tarball."
+	exit 255
+fi
