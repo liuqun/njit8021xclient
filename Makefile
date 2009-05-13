@@ -60,7 +60,7 @@ njit-RefreshIP: RefreshIP.py
 	cat $< > $@
 	chmod +x $@
 #------------------------------------
-Build.log:
+Build.log: njit-client
 	@echo "==========================================================" >  $@
 	@echo "编译者：$(shell grep `whoami` /etc/passwd | cut -d : -f 5)" >> $@
 	@echo "日  期：$(shell date '+%Y年%m月%d日')"                      >> $@

@@ -25,6 +25,7 @@ int Authenticaiton(const char *UserName, const char *Password, const char *Devic
 #include "debug.h"
 
 // 自定义常量
+typedef enum {EAPPACKET=0, START=1, LOGOFF=2, UNKNOWN_5=0x05, UNKNOWN_6=0x06} EAPOL_Type;
 typedef enum {REQUEST=1, RESPONSE=2, SUCCESS=3, FAILURE=4, H3CDATA=10} EAP_Code;
 typedef enum {IDENTITY=1, NOTIFICATION=2, MD5=4, AVAILABLE=20} EAP_Type;
 typedef uint8_t EAP_ID;
@@ -140,32 +141,9 @@ int Authenticaiton(const char *UserName, const char *Password, const char *Devic
 			}
 		}
 
-		// 若收到的第一个包是Request Notification
-		if ((EAP_Type)captured[22] == NOTIFICATION)
-		{
-			DPRINTF("[%d] Server: Request Notification!\n", captured[19]);
-			// 发送Response Notification
-			SendResponseNotification(adhandle, captured, ethhdr);
-			DPRINTF("    Client: Response Notification.\n");
-
-			// 继续接收下一个Request包
-			retcode = pcap_next_ex(adhandle, &header, &captured);
-			assert(retcode==1);
-			assert((EAP_Code)captured[18] == REQUEST);
-		}
-
-		// 遇到AVAILABLE包时需要特殊处理
 		if ((EAP_Type)captured[22] == IDENTITY)
 		{	// 通常情况下收到应是Request Identity
 			DPRINTF("[%d] Server: Request Identity!\n", captured[19]);
-			GetIpFromDevice(ip, DeviceName);
-			SendResponseIdentity(adhandle, captured, ethhdr, ip, UserName);
-			DPRINTF("[%d] Client: Response Identity.\n", (EAP_ID)captured[19]);
-		}
-		else if ((EAP_Type)captured[22] == AVAILABLE)
-		{	// 中南财经政法大学目前使用的格式：
-			// 收到第一个Request AVAILABLE时要回答Response Identity
-			DPRINTF("[%d] Server: Request AVAILABLE!\n", captured[19]);
 			GetIpFromDevice(ip, DeviceName);
 			SendResponseIdentity(adhandle, captured, ethhdr, ip, UserName);
 			DPRINTF("[%d] Client: Response Identity.\n", (EAP_ID)captured[19]);
@@ -177,7 +155,7 @@ int Authenticaiton(const char *UserName, const char *Password, const char *Devic
 		pcap_compile(adhandle, &fcode, FilterStr, 1, 0xff);
 		pcap_setfilter(adhandle, &fcode);
 
-		// 进入循环体
+		// 由循环体处理以下数据包：UNKNOWN_5/MD5/Notification/Success/Failure
 		for (;;)
 		{
 			// 调用pcap_next_ex()函数捕获数据包
@@ -188,80 +166,90 @@ int Authenticaiton(const char *UserName, const char *Password, const char *Devic
 				// NOTE: 这里没有检查网线是否已被拔下或插口接触不良
 			}
 
-			// 根据收到的Request，回复相应的Response包
-			if ((EAP_Code)captured[18] == REQUEST)
-			{
-				switch ((EAP_Type)captured[22])
-				{
-				 case IDENTITY:
-					DPRINTF("[%d] Server: Request Identity!\n", (EAP_ID)captured[19]);
-					GetIpFromDevice(ip, DeviceName);
-					SendResponseIdentity(adhandle, captured, ethhdr, ip, UserName);
-					DPRINTF("[%d] Client: Response Identity.\n", (EAP_ID)captured[19]);
-					break;
-				 case AVAILABLE:
-					DPRINTF("[%d] Server: Request AVAILABLE!\n", (EAP_ID)captured[19]);
-					GetIpFromDevice(ip, DeviceName);
-					SendResponseAvailable(adhandle, captured, ethhdr, ip, UserName);
-					DPRINTF("[%d] Client: Response AVAILABLE.\n", (EAP_ID)captured[19]);
-					break;
-				 case MD5:
-					DPRINTF("[%d] Server: Request MD5-Challenge!\n", (EAP_ID)captured[19]);
-					SendResponseMD5(adhandle, captured, ethhdr, UserName, Password);
-					DPRINTF("[%d] Client: Response MD5-Challenge.\n", (EAP_ID)captured[19]);
-					break;
-				 case NOTIFICATION:
-					DPRINTF("[%d] Server: Request Notification!\n", captured[19]);
-					SendResponseNotification(adhandle, captured, ethhdr);
-					DPRINTF("     Client: Response Notification.\n");
-					break;
-				 default:
-					DPRINTF("[%d] Server: Request (type:%d)!\n", (EAP_ID)captured[19], (EAP_Type)captured[22]);
-					DPRINTF("Error! Unexpected request type\n");
-					exit(-1);
-					break;
-				}
+			if ((EAPOL_Type) captured[15] == UNKNOWN_5)
+			{	// 以下部分仅用于海大浮山校区
+				uint8_t response[60];
+				DPRINTF("Server: Unknown type (0x05)\n");
+				// 报头 (14 Bytes)
+				memcpy(response, ethhdr, 14);
+				// EAPOL (4 Bytes)
+				response[14] = 0x01;			// Version=1
+				response[15] = (EAPOL_Type) UNKNOWN_6;	// Type
+				response[16] = response[17] =0x00;	// Length=0x0000
+				// Trailer
+				memset(response+18, 0xa5, 60-18);
+				pcap_sendpacket(adhandle, response, 60);
+				continue;
 			}
-			else if ((EAP_Code)captured[18] == FAILURE)
-			{	// 处理认证失败信息
-				uint8_t errtype = captured[22];
-				uint8_t msgsize = captured[23];
-				const char *msg = (const char*) &captured[24];
-				DPRINTF("[%d] Server: Failure.\n", (EAP_ID)captured[19]);
-				if (errtype==0x09 && msgsize>0)
-				{	// 输出错误提示消息
-					fprintf(stderr, "%s\n", msg);
-					// 已知的几种错误如下
-					// E2531:用户名不存在
-					// E2535:Service is paused
-					// E2542:该用户帐号已经在别处登录
-					// E2547:接入时段限制
-					// E2553:密码错误
-					// E2602:认证会话不存在
-					// E3137:客户端版本号无效
-					exit(-1);
+			else if ((EAPOL_Type) captured[15] == EAPPACKET)
+			{	// 以下部分仅用于海大浮山校区
+				if ((EAP_Code)captured[18] == REQUEST)
+				{
+					switch ((EAP_Type)captured[22])
+					{
+					 case MD5:
+						DPRINTF("[%d] Server: Request MD5-Challenge!\n", (EAP_ID)captured[19]);
+						SendResponseMD5(adhandle, captured, ethhdr, UserName, Password);
+						DPRINTF("[%d] Client: Response MD5-Challenge.\n", (EAP_ID)captured[19]);
+						break;
+					 case NOTIFICATION:
+						DPRINTF("[%d] Server: Notification.\n", captured[19]);
+						break;
+					 case IDENTITY:
+						DPRINTF("[%d] Server: Request Identity!\n", (EAP_ID)captured[19]);
+						GetIpFromDevice(ip, DeviceName);
+						SendResponseIdentity(adhandle, captured, ethhdr, ip, UserName);
+						DPRINTF("[%d] Client: Response Identity.\n", (EAP_ID)captured[19]);
+						break;
+					 default:
+						DPRINTF("[%d] Server: Request (type:%d)!\n", (EAP_ID)captured[19], (EAP_Type)captured[22]);
+						DPRINTF("Error! Unexpected request type\n");
+						exit(-1);
+						break;
+					}
 				}
-				else if (errtype==0x08) // 可能网络无流量时服务器结束此次802.1X认证会话
-				{	// 遇此情况客户端立刻发起新的认证会话
-					goto START_AUTHENTICATION;
+				else if ((EAP_Code)captured[18] == FAILURE)
+				{	// 处理认证失败信息
+					uint8_t errtype = captured[22];
+					uint8_t msgsize = captured[23];
+					const char *msg = (const char*) &captured[24];
+					DPRINTF("[%d] Server: Failure.\n", (EAP_ID)captured[19]);
+					if (errtype==0x09 && msgsize>0)
+					{	// 输出错误提示消息
+						fprintf(stderr, "%s\n", msg);
+						// 已知的几种错误如下
+						// E2531:用户名不存在
+						// E2535:Service is paused
+						// E2542:该用户帐号已经在别处登录
+						// E2547:接入时段限制
+						// E2553:密码错误
+						// E2602:认证会话不存在
+						// E3137:客户端版本号无效
+						exit(-1);
+					}
+					else if (errtype==0x08) // 可能网络无流量时服务器结束此次802.1X认证会话
+					{	// 遇此情况客户端立刻发起新的认证会话
+						goto START_AUTHENTICATION;
+					}
+					else
+					{
+						DPRINTF("errtype=0x%02x\n", errtype);
+						exit(-1);
+					}
+				}
+				else if ((EAP_Code)captured[18] == SUCCESS)
+				{
+					DPRINTF("[%d] Server: Success.\n", captured[19]);
+					// 刷新IP地址
+					system("./njit-RefreshIP");
 				}
 				else
 				{
-					DPRINTF("errtype=0x%02x\n", errtype);
-					exit(-1);
+					// 忽略
+					DPRINTF("(Received packet with EAP Code %d)\n", captured[19]);
 				}
-			}
-			else if ((EAP_Code)captured[18] == SUCCESS)
-			{
-				DPRINTF("[%d] Server: Success.\n", captured[19]);
-				// 刷新IP地址
-				system("./njit-RefreshIP");
-			}
-			else
-			{
-				DPRINTF("[%d] Server: (H3C data)\n", captured[19]);
-				// TODO: 这里没有处理华为自定义数据包 
-			}
+
+			}// endif // ((EAPOL_Type) captured[15] == EAPPACKET)
 		}
 	}
 	return (0);
@@ -399,24 +387,25 @@ void SendResponseIdentity(pcap_t *adhandle, const uint8_t request[], const uint8
 			response[19] = request[19];		// ID
 			//response[20~21]留空			// Length
 			response[22] = (EAP_Type) IDENTITY;	// Type
-			// Type-Data
-			// {
+			// Identity
+			{
+				const uint8_t netmask[4]={255,255,255,0};
 				i = 23;
-				response[i++] = 0x15;	  // 上传IP地址
-				response[i++] = 0x04;	  //
-				memcpy(response+i, ip, 4);//
-				i += 4;			  //
-				response[i++] = 0x06;		  // 携带版本号
-				response[i++] = 0x07;		  //
-				FillBase64Area((char*)response+i);//
-				i += 28;			  //
-				response[i++] = ' '; // 两个空格符
-				response[i++] = ' '; //
-				usernamelen = strlen(username); //末尾添加用户名
+				// 上传IP地址、子网掩码、网关地址、（备用网关地址？）
+				memcpy(response+i, ip, 4);	i+=4;
+				memcpy(response+i, netmask, 4);	i+=4;
+				memcpy(response+i, ip, 3);	i+=3;// 默认网关的最后一字节为1
+				response[i++] = 0x01;		     //
+				memset(response+i, 0x0, 4); i+=4;
+				// 未知字段
+				memcpy(response+i, "02.04.06", strlen("02.04.06"));
+				i += strlen("02.04.06");
+				//末尾添加用户名
+				usernamelen = strlen(username); 
 				memcpy(response+i, username, usernamelen);
 				i += usernamelen;
 				assert(i <= sizeof(response));
-			// }
+			}
 		// }
 	// }
 	
