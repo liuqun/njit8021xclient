@@ -55,7 +55,7 @@ PACKAGE=njit8021xclient-$VERSION-$ARCH
 SOURCE_DIR=`pwd`
 OUTPUT_DIR=`pwd`/$PACKAGE
 
-echo "Package name: $Package"
+echo "Package name: $PACKAGE"
 echo "Source directory: $SOURCE_DIR"
 echo "Output directory: $OUTPUT_DIR"
 echo "CC=$CC"

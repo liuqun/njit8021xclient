@@ -22,6 +22,7 @@ int Authenticaiton(const char *UserName, const char *Password, const char *Devic
 #include <net/if.h>
 #include <arpa/inet.h>
 
+#include "debug.h"
 
 // 自定义常量
 typedef enum {REQUEST=1, RESPONSE=2, SUCCESS=3, FAILURE=4, H3CDATA=10} EAP_Code;
@@ -65,8 +66,6 @@ extern void FillMD5Area(uint8_t digest[],
 // From ip.c
 extern void GetIpFromDevice(uint8_t ip[4], const char DeviceName[]);
 
-// 定义DPRINTF宏：输出调试信息
-#define DPRINTF(...)	fprintf(stderr, __VA_ARGS__)
 
 
 /**

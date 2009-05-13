@@ -35,7 +35,7 @@ LDLIBS += $(shell libgcrypt-config --libs)
 
 # 源文件
 c_source_files := main.c auth.c fillmd5.c ip.c
-c_header_files :=
+c_header_files := debug.h
 python_source_files := RefreshIP.py
 
 # 输出文件
@@ -49,6 +49,8 @@ all: $(executable_files) $(log_files)
 #------------------------------------
 njit-client: $(object_files)
 	$(LINK.o) $^ $(LDLIBS) -o $@
+auth.o: auth.c debug.h
+	$(COMPILE.c) $< -o $@
 %.o: %.c
 	$(COMPILE.c) $< -o $@
 %.o: %.c %.h
