@@ -81,7 +81,7 @@ fi
 # 压缩打包
 TARBALL=$PACKAGE.tgz
 cd $OUTPUT_DIR/..	&& \
-cp $SOURCE_DIR/ReadMe.html $SOURCE_DIR/License $OUTPUT_DIR/	&& \
+cp --recursive $SOURCE_DIR/ReadMe.html $SOURCE_DIR/License $OUTPUT_DIR/	&& \
 tar --create --gzip --file=$TARBALL $OUTPUT_DIR
 
 if [ $? -eq 0 ] ; then
