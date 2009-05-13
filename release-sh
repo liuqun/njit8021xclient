@@ -82,7 +82,7 @@ fi
 TARBALL=$PACKAGE.tgz
 cd $OUTPUT_DIR/..	&& \
 cp --recursive $SOURCE_DIR/ReadMe.html $SOURCE_DIR/License $OUTPUT_DIR/	&& \
-tar --create --gzip --file=$TARBALL $OUTPUT_DIR
+tar --create --gzip --file=$TARBALL $PACKAGE
 
 if [ $? -eq 0 ] ; then
 	echo "Created tarball: $TARBALL"
