@@ -5,27 +5,27 @@
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 
-	<title>liuqun/njit8021xclient @ GitHub</title>
+	<title>南京工程学院802.1X客户端</title>
 	
 	<style type="text/css">
 		body {
   		margin-top: 1.0em;
-  		background-color: #ff0000;
+ 		background-color: white;
 		  font-family: "helvetica"; 
-  		color: #ffffff;
+  		color: black;
     }
     #container {
       margin: 0 auto;
       width: 700px;
     }
-		h1 { font-size: 3.8em; color: #00ffff; margin-bottom: 3px; }
+		h1 { text-align: center; font-size: 3.8em; color: #00ffff; margin-bottom: 3px; }
 		h1 .small { font-size: 0.4em; }
 		h1 a { text-decoration: none }
 		h2 { font-size: 1.5em; color: #00ffff; }
     h3 { text-align: center; color: #00ffff; }
     a { color: #00ffff; }
     .description { font-size: 1.2em; margin-bottom: 30px; margin-top: 30px; font-style: italic;}
-    .download { float: right; }
+    .download { float: center; }
 		pre { background: #000; color: #fff; padding: 15px;}
     hr { border: 0; width: 80%; border-bottom: 1px solid #aaa}
     .footer { text-align:center; padding-top:30px; font-style: italic; }
@@ -34,56 +34,84 @@
 </head>
 
 <body>
-  <a href="http://github.com/liuqun/njit8021xclient"><img style="position: absolute; top: 0; right: 0; border: 0;" src="http://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub" /></a>
+  <h1><a href="http://github.com/liuqun/njit8021xclient">NJIT 802.1X Client</a></h1>
+  <a href="http://github.com/liuqun/njit8021xclient"><img style="position: absolute; top: 0; right: 0; border: 0;" src="./forkme.png" alt="Fork me on GitHub" /></a>
   
   <div id="container">
 
-    <div class="download">
-      <a href="http://github.com/liuqun/njit8021xclient/zipball/master">
-        <img border="0" width="90" src="http://github.com/images/modules/download/zip.png"></a>
-      <a href="http://github.com/liuqun/njit8021xclient/tarball/master">
-        <img border="0" width="90" src="http://github.com/images/modules/download/tar.png"></a>
-    </div>
       
-    <h1><a href="http://github.com/liuqun/njit8021xclient">njit8021xclient</a> 
-      <span class="small">by <a href="http://github.com/liuqun">liuqun</a></span></h1>
 
     <div class="description">
-      南京工程学院802.1X客户端（Linux版兼容H3C/iNode V2.40-F0335）
+      一套Linux版兼容型802.1X客户端，由南京工程学院、广东工业大学和中南财经政法大学等多所高校Linux爱好者联合开发维护。
+      <p align="right">——<a href="http://github.com/liuqun">刘群</a> from <a href="http://www.njit.edu.cn/">南京工程学院</a></p>
     </div>
 
-    <p>    * 兼容iNode V2.40-F0335，支持华为客户端版本号加密认证
-    * 允许用户名中存在短横线等特殊字符
-    * 自动刷新IP地址
-    * 掉线后自动重连</p><h2>Dependencies</h2>
-<p>libpcap,libgcrypt</p>
-<h2>Install</h2>
-<p>软件免安装，解压到任意目录即可运行，在Ubuntu 8.10、8.04、Debian 5.0、Fedora 9下测试通过，无需安装额外的动态链接库</p>
-<h2>License</h2>
-<p>GPL v3</p>
+    <ul>
+    <li>兼容iNode V2.40-F0335，支持华为客户端版本号加密认证</li>
+    <li>允许用户名中存在短横线等特殊字符</li>
+    <li>自动刷新IP地址</li>
+    <li>掉线后自动重连</li>
+    <li>源代码遵守GPL允许二次开发</li>
+    </ul>
+    
+    <h2>从源代码编译需要安装的开发包</h2>
+		<p>libpcap,libgcrypt</p>
+		<h2>Install</h2>
+		<p>软件免安装，解压到任意目录即可运行，在Ubuntu 8.10、8.04、Debian 5.0、Fedora 9下测试通过，无需安装额外的动态链接库</p>
+		<h2>License</h2>
+		<p><a href="http://gplv3.fsf.org/">GPL v3</a></p>
+
 <h2>Authors</h2>
-<p>南京工程学院：<br/>    * 刘群<br/>    * 赵国彬<br/>    * 谈成<br/>    * 高可 <br/><br/>广东工业大学：<br/>    * wfhwfh<br/>    * jack235<br/>    * opirus<br/>    * Oscar Tang <br/><br/>中南财经政法大学：<br/>    * lamborrari </p>
-<h2>Contact</h2>
-<p>刘群 (liuqun68@gmail.com)<br/>      </p>
+<dl>
+	<dt>南京工程学院：</dt>
+		<dd><a href="http://github.com/liuqun">刘群</a>, liuqun68@gmail.com</dd>
+		<dd>赵国彬</dd>
+		<dd>谈成</dd>
+		<dd>高可</dd>
+	<dt>广东工业大学：</dt>
+		<dd>wfhwfh, jack235, opirus, Oscar Tang</dd>
+	<dt>中南财经政法大学：</dt>
+		<dd>lamborrari</dd>
+</dl>
 
+<h2>开发小组邮件列表</h2>
+<p>njit8021xclient@googlegroups.com
+</p>
 
-    <h2>Download</h2>
+    <h2>从源代码编译需要安装的开发包</h2>
+		<p>libpcap,libgcrypt</p>
+
+    <h2>Download Source Code</h2>
     <p>
       You can download this project in either
       <a href="http://github.com/liuqun/njit8021xclient/zipball/master">zip</a> or
       <a href="http://github.com/liuqun/njit8021xclient/tarball/master">tar</a> formats.
+      <div class="download">
+        <a href="http://github.com/liuqun/njit8021xclient/zipball/master">
+          <img border="0" width="90" src="http://github.com/images/modules/download/zip.png">
+			  </a>
+        <a href="http://github.com/liuqun/njit8021xclient/tarball/master">
+          <img border="0" width="90" src="http://github.com/images/modules/download/tar.png">
+				</a>
+      </div>
     </p>
     <p>You can also clone the project with <a href="http://git-scm.com">Git</a>
       by running:
       <pre>$ git clone git://github.com/liuqun/njit8021xclient</pre>
     </p>
-      
+    <p>
+      Read source code online: <a href="http://github.com/liuqun/njit8021xclient">http://github.com/liuqun/8021xclient</a>
+    </p>  
     <div class="footer">
-      get the source code on GitHub : <a href="http://github.com/liuqun/njit8021xclient">liuqun/njit8021xclient</a>
+      <hr />
+      <small>华为、锐捷等公司长期以来一直漠视国内广大Linux用户群体，在此表示强烈谴责！</small>
     </div>
     
   </div>
 
-  
 </body>
 </html>
+
+<!--
+vim: tabstop=2:
+-->
