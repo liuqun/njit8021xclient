@@ -1,117 +1,122 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
-	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
-	<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-
-	<title>南京工程学院802.1X客户端</title>
-	
-	<style type="text/css">
-		body {
-  		margin-top: 1.0em;
- 		background-color: white;
-		  font-family: "helvetica"; 
-  		color: black;
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <title>南京工程学院802.1X客户端</title>
+  <style type="text/css">
+    body {
+      margin-top: 1.0em;
+      background-color: white;
+      font-family: "helvetica"; 
+      color: black;
     }
     #container {
       margin: 0 auto;
       width: 700px;
     }
-		h1 { text-align: center; font-size: 3.8em; color: #00ffff; margin-bottom: 3px; }
-		h1 .small { font-size: 0.4em; }
-		h1 a { text-decoration: none }
-		h2 { font-size: 1.5em; color: #00ffff; }
-    h3 { text-align: center; color: #00ffff; }
-    a { color: #00ffff; }
-    .description { font-size: 1.2em; margin-bottom: 30px; margin-top: 30px; font-style: italic;}
-    .download { float: center; }
-		pre { background: #000; color: #fff; padding: 15px;}
+    h1 { text-align: center; font-size: 3.8em; margin-bottom: 3px; }
+    h1 .small { font-size: 0.4em; }
+    h1 a { text-decoration: none }
+    h2 { font-size: 1.5em; }
+    h3 { text-align: center; }
+    .description { font-size: 1.2em; margin-bottom: 30px; margin-top: 30px; }
+    pre { margin: 0 auto; background: black; color: yellow; padding: 10px;}
     hr { border: 0; width: 80%; border-bottom: 1px solid #aaa}
     .footer { text-align:center; padding-top:30px; font-style: italic; }
-	</style>
-	
+  </style>
 </head>
 
 <body>
-  <h1><a href="http://github.com/liuqun/njit8021xclient">NJIT 802.1X Client</a></h1>
-  <a href="http://github.com/liuqun/njit8021xclient"><img style="position: absolute; top: 0; right: 0; border: 0;" src="./forkme.png" alt="Fork me on GitHub" /></a>
-  
-  <div id="container">
-
-      
-
-    <div class="description">
-      一套Linux版兼容型802.1X客户端，由南京工程学院、广东工业大学和中南财经政法大学等多所高校Linux爱好者联合开发维护。
-      <p align="right">——<a href="http://github.com/liuqun">刘群</a> from <a href="http://www.njit.edu.cn/">南京工程学院</a></p>
-    </div>
-
+<div id="container">
+  <h1>NJIT 802.1X Client</h1>
+  <div class="description">
+    这是一套Linux版兼容型802.1X客户端，由南京工程学院、广东工业大学和中南财经政法大学等多所高校Linux爱好者联合开发维护。
+  </div>
+  <h2>特点</h2>
     <ul>
-    <li>兼容iNode V2.40-F0335，支持华为客户端版本号加密认证</li>
+    <li>完全兼容iNode V2.40-F0335，兼容华为客户端版本号加密认证</li>
     <li>允许用户名中存在短横线等特殊字符</li>
-    <li>自动刷新IP地址</li>
+    <li>支持广播/多播触发认证</li>
+    <li>上线自动刷新IP地址</li>
     <li>掉线后自动重连</li>
-    <li>源代码遵守GPL允许二次开发</li>
+    <li>软件免安装，解压到任意目录即可运行</li>
+    <li>在Ubuntu/Debian/Fedora下无需安装额外的动态链接库</li>
+    <li>源代码完全开放，在<a href="http://gplv3.fsf.org/">GPL</a>保护下公开发布</li>
     </ul>
-    
-    <h2>从源代码编译需要安装的开发包</h2>
-		<p>libpcap,libgcrypt</p>
-		<h2>Install</h2>
-		<p>软件免安装，解压到任意目录即可运行，在Ubuntu 8.10、8.04、Debian 5.0、Fedora 9下测试通过，无需安装额外的动态链接库</p>
-		<h2>License</h2>
-		<p><a href="http://gplv3.fsf.org/">GPL v3</a></p>
 
-<h2>Authors</h2>
-<dl>
-	<dt>南京工程学院：</dt>
-		<dd><a href="http://github.com/liuqun">刘群</a>, liuqun68@gmail.com</dd>
-		<dd>赵国彬</dd>
-		<dd>谈成</dd>
-		<dd>高可</dd>
-	<dt>广东工业大学：</dt>
-		<dd>wfhwfh, jack235, opirus, Oscar Tang</dd>
-	<dt>中南财经政法大学：</dt>
-		<dd>lamborrari</dd>
-</dl>
 
-<h2>开发小组邮件列表</h2>
-<p>njit8021xclient@googlegroups.com
-</p>
+  <h2>项目Wiki文档</h2>
+    <a href="http://wiki.ubuntu.org.cn/南京工程学院802.1X客户端">点击此处访问位于Ubuntu中文社区的项目文档</a>
 
-    <h2>从源代码编译需要安装的开发包</h2>
-		<p>libpcap,libgcrypt</p>
+  <h2>开发小组邮件列表/讨论板/QQ群</h2>
+    <ul>
+    <li>发送Email到开发小组的公共邮箱<a href="mailto:njit8021xclient@googlegroups.com">njit8021xclient@googlegroups.com</a></li>
+    <li>通过Google网上论坛访问<a href="http://groups.google.com/group/njit8021xclient?hl=zh-CN">校园网802.1X客户端开发小组讨论板</a></li>
+    <li>QQ群：86079951</li>
+    </ul>
 
-    <h2>Download Source Code</h2>
-    <p>
-      You can download this project in either
+  <h2>小组成员</h2>
+  <dl>
+    <dt><a href="http://www.njit.edu.cn">南京工程学院</a>：</dt>
+      <dd>刘群，<img src="./emails/liuqun.png"/></dd>
+      <dd>赵国彬</dd>
+      <dd>谈成</dd>
+      <dd>高可</dd>
+    <dt>广东工业大学：</dt>
+      <dd>wfhwfh</dd>
+      <dd>jack235</dd>
+      <dd>opirus</dd>
+      <dd>Oscar Tang</dd>
+    <dt>中南财经政法大学：</dt>
+      <dd>lamborrari</dd>
+  </dl>
+
+
+
+  <h2>查看源代码</h2>
+    <p>欢迎通过<a href="http://github.com">GitHub</a>在线浏览源代码仓库：
+      <a href="http://github.com/liuqun/njit8021xclient">http://github.com/liuqun/8021xclient</a>
+    </p>
+
+  <h2>下载源代码</h2>
+    <ul>
+    <li>You can download source code in either
       <a href="http://github.com/liuqun/njit8021xclient/zipball/master">zip</a> or
       <a href="http://github.com/liuqun/njit8021xclient/tarball/master">tar</a> formats.
-      <div class="download">
-        <a href="http://github.com/liuqun/njit8021xclient/zipball/master">
-          <img border="0" width="90" src="http://github.com/images/modules/download/zip.png">
-			  </a>
-        <a href="http://github.com/liuqun/njit8021xclient/tarball/master">
-          <img border="0" width="90" src="http://github.com/images/modules/download/tar.png">
-				</a>
-      </div>
-    </p>
-    <p>You can also clone the project with <a href="http://git-scm.com">Git</a>
-      by running:
+    </li>
+    <li>使用git命令克隆源代码仓库：
       <pre>$ git clone git://github.com/liuqun/njit8021xclient</pre>
-    </p>
-    <p>
-      Read source code online: <a href="http://github.com/liuqun/njit8021xclient">http://github.com/liuqun/8021xclient</a>
-    </p>  
-    <div class="footer">
-      <hr />
-      <small>华为、锐捷等公司长期以来一直漠视国内广大Linux用户群体，在此表示强烈谴责！</small>
-    </div>
-    
-  </div>
+    </li>
+    <li>使用svn导出源代码：
+      <pre>$ svn export http://gforge.osdn.net.cn/svn/njit8021xclient</pre>
+    </li>
+    </ul>
+
+  <h2>如何编译</h2>
+    <ol>
+      <li>进行编译之前，请安装libpcap和libgcrypt的开发包：
+      <pre>$ sudo apt-get install libpcap-dev libgcrypt-dev</pre>
+      或：
+      <pre>$ su -c "yum install libpcap-devel libgcrypt-devel"</pre>
+      </li>
+
+      <li>在源代码目录下使用make命令进行编译：
+      <pre>$ make</pre>
+      </li>
+
+      <li>另外提供一个辅助脚本release-sh用于项目打包发布，使用方法：
+      <pre>$ ./release-sh v1.0 i386</pre>
+      </li>
+    </ol>
+</div> <!-- <div id="container"> -->
+
+<div class="footer">
+  <hr />
+  <small>华为、锐捷等公司长期以来一直漠视国内广大Linux用户群体，在此表示强烈谴责！</small>
+</div>
 
 </body>
 </html>
 
-<!--
-vim: tabstop=2:
--->
