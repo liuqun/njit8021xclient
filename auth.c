@@ -28,7 +28,8 @@ int Authenticaiton(const char *UserName, const char *Password, const char *Devic
 typedef enum {REQUEST=1, RESPONSE=2, SUCCESS=3, FAILURE=4, H3CDATA=10} EAP_Code;
 typedef enum {IDENTITY=1, NOTIFICATION=2, MD5=4, AVAILABLE=20} EAP_Type;
 typedef uint8_t EAP_ID;
-const uint8_t MultcastAddr[6] = {0x01,0x80,0xc2,0x00,0x00,0x03}; // 多播地址
+const uint8_t BroadcastAddr[6] = {0xff,0xff,0xff,0xff,0xff,0xff}; // 广播MAC地址
+const uint8_t MultcastAddr[6]  = {0x01,0x80,0xc2,0x00,0x00,0x03}; // 多播MAC地址
 const char H3C_VERSION[16]="EN V2.40-0335"; // 华为客户端版本号
 const char H3C_KEY[]      ="HuaWei3COM1X";  // H3C的固定密钥
 
@@ -300,7 +301,7 @@ void SendStartPkt(pcap_t *handle, const uint8_t localmac[])
 	uint8_t packet[18];
 
 	// Ethernet Header (14 Bytes)
-	memcpy(packet, MultcastAddr, 6);
+	memcpy(packet, BroadcastAddr, 6);
 	memcpy(packet+6, localmac,   6);
 	packet[12] = 0x88;
 	packet[13] = 0x8e;

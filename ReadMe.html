@@ -41,16 +41,21 @@ http://groups.google.com/group/njit8021xclient?hl=zh-CN
 [3] Client: Response MD5-Challenge.
 [4] Server: (H3C data)
 [4] Server: Success.
-Activate network connetion "System eth0"
-	/org/freedesktop/NetworkManagerSettings/0
-Using network interface "eth0"
-	/org/freedesktop/Hal/devices/net_00_16_36_52_53_12
-[5] Server: (H3C data)
+《debug_msg from="./njit-RefreshIP" func="__main__"》
+  Hal Device: /org/freedesktop/Hal/devices/net_00_16_36_52_53_12
+    net.interface = "eth0"
+  NetworkManager Connection: /org/freedesktop/NetworkManagerSettings/0
+    connection.id = "System eth0"
+  Activated Connection: /org/freedesktop/NetworkManager/ActiveConnection/7
+《/debug_msg》
+[1] Server: Request Identity!
+[1] Client: Response Identity.
+[5] Server: Request Identity!
+[5] Client: Response Identity.
 [1] Server: Request Identity!
 [1] Client: Response Identity.
 [6] Server: Request Identity!
 [6] Client: Response Identity.
-
 
 
 五、如果你们学校配置的是动态分配IP地址，客户端程序会自动通知操作系统获取IP地址。
