@@ -22,7 +22,7 @@ fi
 CC=cc
 case $ARCH in
     i[3-6]86 ) # 32位PC机
-	CFLAGS="-march=$ARCH -D NDEBUG"
+	CFLAGS="-march=$ARCH"
 	break
 	;;
     x86_64|amd64) # AMD64位PC机
