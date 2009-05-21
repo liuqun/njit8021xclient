@@ -116,12 +116,6 @@ int Authenticaiton(const char *UserName, const char *Password, const char *Devic
 		uint8_t	ethhdr[14]={0}; // ethernet header
 		uint8_t	ip[4]={0};	// ip address
 
-		// 填写报头(以后无须再修改)
-		memcpy(ethhdr+0, MultcastAddr, 6); // 注：默认以多播方式发送数据包
-		memcpy(ethhdr+6, MAC, 6);
-		ethhdr[12] = 0x88;
-		ethhdr[13] = 0x8e;
-
 		/* 主动发起认证会话 */
 		SendStartPkt(adhandle, MAC);
 		DPRINTF("[ ] Client: Start.\n");
@@ -141,7 +135,14 @@ int Authenticaiton(const char *UserName, const char *Password, const char *Devic
 			}
 		}
 
-		// 若收到的第一个包是Request Notification
+		// 填写应答包的报头(以后无须再修改)
+		// 默认以单播方式应答802.1X认证设备发来的Request
+		memcpy(ethhdr+0, captured+6, 6);
+		memcpy(ethhdr+6, MAC, 6);
+		ethhdr[12] = 0x88;
+		ethhdr[13] = 0x8e;
+
+		// 收到的第一个包可能是Request Notification。取决于校方网络配置
 		if ((EAP_Type)captured[22] == NOTIFICATION)
 		{
 			DPRINTF("[%d] Server: Request Notification!\n", captured[19]);
@@ -155,16 +156,17 @@ int Authenticaiton(const char *UserName, const char *Password, const char *Devic
 			assert((EAP_Code)captured[18] == REQUEST);
 		}
 
-		// 遇到AVAILABLE包时需要特殊处理
+		// 分情况应答下一个包
 		if ((EAP_Type)captured[22] == IDENTITY)
-		{	// 通常情况下收到应是Request Identity
+		{	// 通常情况会收到包Request Identity，应回答Response Identity
 			DPRINTF("[%d] Server: Request Identity!\n", captured[19]);
 			GetIpFromDevice(ip, DeviceName);
 			SendResponseIdentity(adhandle, captured, ethhdr, ip, UserName);
 			DPRINTF("[%d] Client: Response Identity.\n", (EAP_ID)captured[19]);
 		}
 		else if ((EAP_Type)captured[22] == AVAILABLE)
-		{	// 中南财经政法大学目前使用的格式：
+		{	// 遇到AVAILABLE包时需要特殊处理
+			// 中南财经政法大学目前使用的格式：
 			// 收到第一个Request AVAILABLE时要回答Response Identity
 			DPRINTF("[%d] Server: Request AVAILABLE!\n", captured[19]);
 			GetIpFromDevice(ip, DeviceName);
@@ -311,7 +313,11 @@ void SendStartPkt(pcap_t *handle, const uint8_t localmac[])
 	packet[15] = 0x01;	// Type=Start
 	packet[16] = packet[17] =0x00;// Length=0x0000
 
-	// 发包
+	// 为了兼容不同院校的网络配置，这里发送两遍Start包
+	// 1、广播发送Strat包
+	pcap_sendpacket(handle, packet, sizeof(packet));
+	// 2、多播发送Strat包
+	memcpy(packet, MultcastAddr, 6);
 	pcap_sendpacket(handle, packet, sizeof(packet));
 }
 
