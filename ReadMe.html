@@ -10,7 +10,7 @@
 本项目旨在解决使用Linux操作系统登陆华为802.1X校园网络的问题
 兼容iNode V2.40-F0335，支持华为客户端版本号加密认证，支持用户名中存在特殊字符
 目前njit-client在以下学校运行良好(感谢网友热心反馈)：
-    南京工程学院、中南财经政法大学、华北电力大学、广东工业大学、长安大学
+    南京工程学院、中南财经政法大学、华北电力大学、广东工业大学(部分校区由于使用了iNode V3.60-6202暂不支持)、长安大学
     湖南大学、福建师范大学、山东大学、中南大学
 如果您发现客户端在您学校无法使用，请在我们802.1X客户端开发小组的讨论板留言，
 http://groups.google.com/group/njit8021xclient?hl=zh-CN
@@ -41,13 +41,7 @@ http://groups.google.com/group/njit8021xclient?hl=zh-CN
 [3] Client: Response MD5-Challenge.
 [4] Server: (H3C data)
 [4] Server: Success.
-《debug_msg from="./njit-RefreshIP" func="__main__"》
-  Hal Device: /org/freedesktop/Hal/devices/net_00_16_36_52_53_12
-    net.interface = "eth0"
-  NetworkManager Connection: /org/freedesktop/NetworkManagerSettings/0
-    connection.id = "System eth0"
-  Activated Connection: /org/freedesktop/NetworkManager/ActiveConnection/7
-《/debug_msg》
+./njit-RefreshIP: 已激活默认网络连接“System eth0”
 [1] Server: Request Identity!
 [1] Client: Response Identity.
 [5] Server: Request Identity!
@@ -58,8 +52,8 @@ http://groups.google.com/group/njit8021xclient?hl=zh-CN
 [6] Client: Response Identity.
 
 
-五、如果你们学校配置的是动态分配IP地址，客户端程序会自动通知操作系统获取IP地址。
-    但如果学校分配的是静态IP地址，则还需要手动设置。
+五、如果你们学校配置的是动态分配IP地址，njit-RefreshIP会自动通知操作系统获取IP地址。
+    如果学校分配的是静态IP地址，则需要你在网络管理小程序(nm-applet)中手动设置IP地址。
     如果你需要帮助，请联系校园网802.1X客户端开发小组（发送Email至： njit8021xclient@googlegroups.com ）
 
 
@@ -73,12 +67,11 @@ http://groups.google.com/group/njit8021xclient?hl=zh-CN
 校园网802.1X客户端交流QQ群（感谢jack235）
  群号：86079951 
 
-GForge软件发布平台，提供源代码及编译好的可执行文件
- http://gforge.osdn.net.cn/projects/njit8021xclient/
-
 Wiki文档
-  http://wiki.ubuntu.org.cn/南京工程学院802.1X客户端
+ http://wiki.ubuntu.org.cn/南京工程学院802.1X客户端
 
+GitHub开源项目托管
+ http://github.com/liuqun/njit8021xclient
 
 [现任项目维护者]
 南京工程学院：liuqun68@gmail.com, njzhaoguobin@163.com
