@@ -16,8 +16,12 @@
 import sys
 import dbus
 
-nm = dbus.SystemBus().get_object('org.freedesktop.NetworkManager',
-                                '/org/freedesktop/NetworkManager')
+try:
+	nm = dbus.SystemBus().get_object('org.freedesktop.NetworkManager',
+                                        '/org/freedesktop/NetworkManager')
+except dbus.exceptions.DBusException, errmsg:
+	sys.stderr.write(__file__ + ': Unable to find NetworkManager daemon from DBus: ' + errmsg)
+	sys.exit(0xFF)
 
 def GetProperty(property_name, object, interface_name):
 	"""Get property of a dbus object through a dbus interface"""
@@ -47,7 +51,9 @@ for connection_opath in active_connections:
 			print __file__ + ': Using NetworkManager configuration "' + ac.settings['connection']['id'] + '".'
 			try:
 				dbus.Interface(nm,'org.freedesktop.NetworkManager').ActivateConnection(ac.service, ac.connection, dev, ac.spec)
-				sys.exit(0)
-			except dbus.exceptions.DBusException, e:
-				print e
+				sys.exit(0) # 正常退出
+			except dbus.exceptions.DBusException, errmsg:
+				sys.stderr.write(__file__ + ': Failed to activate "' + ac.settings['connection']['id'] + '": ' + errmsg)
+
+sys.stderr.write(__file__ + ': Unable to find any wired network connections. Check your cables maybe?') 
 
