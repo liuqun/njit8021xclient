@@ -16,7 +16,7 @@ fi
 if [ -n "$2" ] ; then
 	ARCH=$2
 else
-	ARCH=`uname --machine` # 未指定硬件架构时，自动为本机进行编译
+	ARCH=`uname --hardware-platform` # 未指定硬件架构时，自动为本机进行编译
 fi
 
 CC=cc
@@ -28,7 +28,7 @@ case $ARCH in
     x86_64|amd64) # AMD64位PC机
 	echo "Warning: Build for $ARCH has not been fully supported yet."
 	echo "Contact the authors for more infomation. (See ReadMe.html)"
-	CFLAGS="-m64 -D NDEBUG"
+	CFLAGS="-m64"
 	break
 	;;
     mips) # MIPS内核的路由器(或龙芯PC机?)
@@ -79,7 +79,7 @@ fi
 
 
 # 压缩打包
-TARBALL=$PACKAGE.tgz
+TARBALL=$PACKAGE.tar.gz
 cd $OUTPUT_DIR/..	&& \
 cp --recursive $SOURCE_DIR/ReadMe.html $SOURCE_DIR/License $OUTPUT_DIR/	&& \
 tar --create --gzip --file=$TARBALL $PACKAGE
