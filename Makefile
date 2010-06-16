@@ -44,6 +44,8 @@ object_files := $(patsubst %.c, %.o, $(c_source_files))
 log_files := Build.log
 
 #====================================
+BIN =$(DESTDIR)/usr/bin
+ICONS =$(DESTDIR)/usr/share/njit8021xclient
 .PHONY: all
 all: $(executable_files) $(log_files)
 #------------------------------------
@@ -88,3 +90,8 @@ distclean:
 	$(RM) $(executable_files)
 	$(RM) $(log_files)
 
+.PHONY: install
+install:
+	install -d $(BIN) $(ICONS) $(DESTDIR)/etc
+	install ./njit-client $(BIN)
+	install ./njit-RefreshIP $(BIN)
