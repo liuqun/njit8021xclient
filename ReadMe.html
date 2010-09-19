@@ -25,35 +25,13 @@ http://groups.google.com/group/njit8021xclient?hl=zh-CN
 二、从开始菜单里找到“终端”，打开后进入命令提示符窗口
 三、通过命令行切换为root并运行njit-client程序
     Ubuntu下命令格式为：
-	sudo ./njit-client s-12345 abcde
+	sudo njit-client s-12345 abcde
     RedHat/Fedora下命令格式为
-	su -c "./njit-client s-12345 abcde"
+	su -c "njit-client s-12345 abcde"
 四、程序会输出一些调试信息（因目前仍是测试版本），其中大部分信息不用理会，
     只需关注如果包括[*] Server: Success.这样一行提示即为802.1X认证成功
     如果提示为Server: Failure则为认证失败，另外还会输出"E????: "，这是服务器
     发来的提示信息。
-目前客户端程序默认在调试模式运行时，预计输出的调试信息如下：
-[ ] Client: Start.
-[1] Server: Request Notification!
-    Client: Response Notification.
-[2] Server: Request Identity!
-[2] Client: Response Identity.
-[3] Server: Request MD5-Challenge!
-[3] Client: Response MD5-Challenge.
-[4] Server: (H3C data)
-[4] Server: Success.
-./njit-RefreshIP: Activating network connection and refreshing IP address...
-./njit-RefreshIP: Using NetworkManager configuration "System eth0".
-[1] Server: Request Identity!
-[1] Client: Response Identity.
-[5] Server: Request Identity!
-[5] Client: Response Identity.
-[1] Server: Request Identity!
-[1] Client: Response Identity.
-[6] Server: Request Identity!
-[6] Client: Response Identity.
-
-
 五、如果你们学校配置的是动态分配IP地址，njit-RefreshIP会自动通知操作系统获取IP地址。
     如果学校分配的是静态IP地址，则需要你在网络管理小程序(nm-applet)中手动设置IP地址。
     如果你需要帮助，请联系校园网802.1X客户端开发小组（发送Email至： njit8021xclient@googlegroups.com ）
