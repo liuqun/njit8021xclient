@@ -1,0 +1,115 @@
+# @configure_input@
+#
+
+# Compiler options
+CC := @CC@
+CFLAGS := @CFLAGS@
+LDFLAGS := @LDFLAGS@
+EXEEXT := @EXEEXT@
+
+# Library packages
+PKG_CONFIG := @PKG_CONFIG@
+ifndef PKG_CONFIG
+ $(error Can not find pkg-config, \
+         please try ./configure PKG_CONFIG=/opt/gtk/bin/pkg-config)
+endif
+GTK_CFLAGS = $(shell "$(PKG_CONFIG)" --cflags gtk+-2.0)
+GTK_LIBS = $(shell "$(PKG_CONFIG)" --libs gtk+-2.0)
+
+# Useful commands
+MKDIR := mkdir -p
+RM := rm -rf
+XGETTEXT := xgettext
+MSGINIT := msginit
+MSGMERGE := msgmerge
+INSTALL := install
+INSTALL_PROGRAM := $(INSTALL)
+INSTALL_DATA := $(INSTALL) -m 644
+INSTALL_DIR := $(INSTALL) -d
+
+# Installation configuration
+PACKAGE_NAME := @PACKAGE_NAME@
+prefix       := @prefix@
+exec_prefix  := @exec_prefix@
+bindir       := @bindir@
+datarootdir  := @datarootdir@
+datadir      := @datadir@
+localedir    := @localedir@
+lang := zh_CN
+
+# Configure project files
+srcdir := @srcdir@
+VPATH := $(srcdir)
+executable_files :=
+source_files     :=
+object_files     :=
+
+#------------------------------
+# Load all building dependences...
+.PHONY: all
+all:
+
+source_files += main.c
+source_files += ip.c
+source_files += config.c
+
+source_files += auth.c
+auth.o: CFLAGS+=$(shell pcap-config --cflags)
+
+source_files += fillmd5.c
+fillmd5.o: CFLAGS+=$(shell libgcrypt-config --cflags)
+
+object_files = $(patsubst %.c, %.o, $(source_files))
+
+njit-client@EXEEXT@: LDLIBS+=$(shell pcap-config --libs)
+njit-client@EXEEXT@: LDLIBS+=$(shell libgcrypt-config --libs)
+njit-client@EXEEXT@: $(object_files)
+	$(LINK.o) $^ $(LDLIBS) -o $@
+
+executable_files += njit-client@EXEEXT@
+
+all: Makefile $(executable_files) $(lang).gmo
+
+#------------------------------
+# Default building rules.
+%@EXEEXT@: %.o
+	$(LINK.o) $^ $(LDLIBS) -o $@
+%.o: %.c
+	$(COMPILE.c) $< -o $@
+%.o: %.c %.h
+	$(COMPILE.c) $< -o $@
+#------------------------------
+# Translations
+%.gmo: %.po
+	msgfmt $< -o $@
+$(lang).po: njit-client.pot
+	if test -e $@ ; then $(MSGMERGE) --quiet --update $@ $< ; \
+	else $(MSGINIT) --no-translator --input=$< --output-file=$@ ; \
+	fi
+njit-client.pot: $(source_files)
+	$(XGETTEXT) --from-code=UTF-8 -k_ $^ --force-po --output=$@
+# Recreate Makefile when Makefile.in has been changed
+%: %.in
+	./config.status --quiet --file=$@
+#------------------------------
+# make clean
+
+.PHONY: clean
+clean:
+	$(RM) $(executable_files)
+	$(RM) $(object_files)
+#------------------------------
+# make distclean
+.PHONY: distclean
+distclean: clean
+	$(RM) config.log config.status Makefile
+#------------------------------
+# make install
+.PHONY: install
+install: all
+	$(INSTALL_DIR) $(bindir)
+	$(INSTALL_DIR) $(datadir)
+	$(INSTALL_DIR) $(localedir)/$(lang)/LC_MESSAGES
+	$(INSTALL_PROGRAM) $(executable_files) $(bindir)
+	$(INSTALL_DATA) $(lang).gmo $(localedir)/$(lang)/LC_MESSAGES/$(PACKAGE_NAME).mo
+
