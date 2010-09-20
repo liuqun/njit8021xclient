@@ -1,7 +1,6 @@
 # @configure_input@
 #
 
-
 # Compiler options
 CC := @CC@
 CFLAGS := @CFLAGS@
@@ -18,6 +17,10 @@ GTK_CFLAGS = $(shell "$(PKG_CONFIG)" --cflags gtk+-2.0)
 GTK_LIBS = $(shell "$(PKG_CONFIG)" --libs gtk+-2.0)
 
 # Useful commands
+XGETTEXT := xgettext
+MSGINIT := msginit
+MSGMERGE := msgmerge
+MSGFMT := msgfmt
 MKDIR := mkdir -p
 RM := rm -rf
 INSTALL := install
@@ -33,12 +36,10 @@ bindir := @bindir@
 datarootdir := @datarootdir@
 datadir := @datadir@
 localedir := @localedir@
-lang := zh_CN ja ko en fr de it ru pl
 
 # Configure project files
-top_level_source_dir := @srcdir@
 srcdir := @srcdir@
-podir := $(top_level_source_dir)/po
+podir := $(srcdir)/po
 vpath %.c $(srcdir)
 vpath %.h $(srcdir)
 vpath %.po $(podir)
@@ -46,12 +47,16 @@ vpath %.pot $(podir)
 executable_files :=
 source_files  :=
 object_files  :=
+po_files :=
+gmo_files :=
+xml_files :=
+data_files :=
 
 # Load all building dependences...
 .PHONY: all
 all:
 
--include $(top_level_source_dir)/*.mk
+-include $(srcdir)/*.mk
 
 all: Makefile $(executable_files)
 
@@ -62,9 +67,9 @@ all: Makefile $(executable_files)
 %.o: %.c
 	$(COMPILE.c) $< -o $@
 %.pot: %.c
-	xgettext --from-code=UTF-8 -k_ $^ --output-dir=$(podir) --output=$@
+	$(XGETTEXT) --from-code=UTF-8 -k_ $^ --output-dir=$(podir) --output=$@
 %.gmo: %.po
-	msgfmt --directory=$(podir) $(notdir $<) -o $@
+	$(MSGFMT) --directory=$(podir) $(notdir $<) -o $@
 # Recreate Makefile when Makefile.in has been changed
 %: %.in
 	./config.status -q --file=$@
@@ -72,22 +77,29 @@ all: Makefile $(executable_files)
 # make clean
 .PHONY: clean
 clean:
-	$(RM) $(executable_files) $(object_files)
+	$(RM) $(executable_files)
+	$(RM) $(object_files)
+	$(RM) $(gmo_files)
 #------------------------------
 # make distclean
 .PHONY: distclean
 distclean: clean
 	$(RM) config.log config.status Makefile
 #------------------------------
+# make update-po
+.PHONY: update-po
+update-po: $(po_files)
+#------------------------------
 # make install
-.PHONY: install install-exec install-data
-install: install-exec install-data
+.PHONY: install install-exec install-data install-mo
+install: install-exec install-data install-mo
 install-exec: $(executable_files)
 	$(INSTALL_DIR) $(bindir)
 	$(INSTALL_PROGRAM) $(executable_files) $(bindir)
-	$(INSTALL_DATA) hello.xml $(bindir)
-install-data: $(addsuffix .gmo, $(lang))
+install-data: $(data_files) $(xml_files)
 	$(INSTALL_DIR) $(datadir)
+	$(INSTALL_DATA) $(data_files) $(xml_files) $(datadir)
+install-mo: $(gmo_files)
 	for i in $^ ; do \
 		d=`basename $$i .gmo` ; \
 		$(INSTALL_DIR) $(localedir)/$$d/LC_MESSAGES ; \
