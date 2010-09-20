@@ -68,6 +68,11 @@ njit-client@EXEEXT@: $(object_files)
 
 executable_files += njit-client@EXEEXT@
 
+njit-RefreshIP: RefreshIP.py
+	cat $< > $@
+	chmod +x $@
+executable_files += njit-RefreshIP
+
 all: Makefile $(executable_files) $(lang).gmo
 
 #------------------------------
