@@ -1,0 +1,50 @@
+# German translations for PACKAGE package
+# German messages for PACKAGE.
+# Copyright (C) 2010 THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# Automatically generated, 2010.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2010-09-20 01:02+0800\n"
+"PO-Revision-Date: 2010-09-20 01:02+0800\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: none\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=GBK\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: hello.c:35
+msgid "Hello World"
+msgstr ""
+
+#: hello.c:65
+msgid "_File"
+msgstr ""
+
+#: hello.c:66
+msgid "File operations"
+msgstr ""
+
+#: hello.c:71
+msgid "_Send"
+msgstr ""
+
+#: hello.c:72
+msgid "Send hello world to console"
+msgstr ""
+
+#: hello.c:77
+msgid "_Quit"
+msgstr ""
+
+#: hello.c:78
+msgid "Quit"
+msgstr ""
+
+#: hello.c:115
+msgid "Hello world!"
+msgstr ""

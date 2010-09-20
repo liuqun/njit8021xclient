@@ -1,0 +1,96 @@
+# @configure_input@
+#
+
+
+# Compiler options
+CC := @CC@
+CFLAGS := @CFLAGS@
+LDFLAGS := @LDFLAGS@
+EXEEXT := @EXEEXT@
+
+# Library packages
+PKG_CONFIG := @PKG_CONFIG@
+ifndef PKG_CONFIG
+ $(error Can not find pkg-config, \
+         please try ./configure PKG_CONFIG=/opt/gtk/bin/pkg-config)
+endif
+GTK_CFLAGS = $(shell "$(PKG_CONFIG)" --cflags gtk+-2.0)
+GTK_LIBS = $(shell "$(PKG_CONFIG)" --libs gtk+-2.0)
+
+# Useful commands
+MKDIR := mkdir -p
+RM := rm -rf
+INSTALL := install
+INSTALL_PROGRAM := $(INSTALL)
+INSTALL_DATA := $(INSTALL) -m 644
+INSTALL_DIR := $(INSTALL) -d
+
+# Installation configuration
+PACKAGE_NAME := @PACKAGE_NAME@
+prefix := @prefix@
+exec_prefix := @exec_prefix@
+bindir := @bindir@
+datarootdir := @datarootdir@
+datadir := @datadir@
+localedir := @localedir@
+lang := zh_CN ja ko en fr de it ru pl
+
+# Configure project files
+top_level_source_dir := @srcdir@
+srcdir := @srcdir@
+podir := $(top_level_source_dir)/po
+vpath %.c $(srcdir)
+vpath %.h $(srcdir)
+vpath %.po $(podir)
+vpath %.pot $(podir)
+executable_files :=
+source_files  :=
+object_files  :=
+
+# Load all building dependences...
+.PHONY: all
+all:
+
+-include $(top_level_source_dir)/*.mk
+
+all: Makefile $(executable_files)
+
+#------------------------------
+# Default building rules.
+%@EXEEXT@: %.o
+	$(LINK.o) $^ $(LDLIBS) -o $@
+%.o: %.c
+	$(COMPILE.c) $< -o $@
+%.pot: %.c
+	xgettext --from-code=UTF-8 -k_ $^ --output-dir=$(podir) --output=$@
+%.gmo: %.po
+	msgfmt --directory=$(podir) $(notdir $<) -o $@
+# Recreate Makefile when Makefile.in has been changed
+%: %.in
+	./config.status -q --file=$@
+#------------------------------
+# make clean
+.PHONY: clean
+clean:
+	$(RM) $(executable_files) $(object_files)
+#------------------------------
+# make distclean
+.PHONY: distclean
+distclean: clean
+	$(RM) config.log config.status Makefile
+#------------------------------
+# make install
+.PHONY: install install-exec install-data
+install: install-exec install-data
+install-exec: $(executable_files)
+	$(INSTALL_DIR) $(bindir)
+	$(INSTALL_PROGRAM) $(executable_files) $(bindir)
+	$(INSTALL_DATA) hello.xml $(bindir)
+install-data: $(addsuffix .gmo, $(lang))
+	$(INSTALL_DIR) $(datadir)
+	for i in $^ ; do \
+		d=`basename $$i .gmo` ; \
+		$(INSTALL_DIR) $(localedir)/$$d/LC_MESSAGES ; \
+		$(INSTALL_DATA) $$i $(localedir)/$$d/LC_MESSAGES/$(PACKAGE_NAME).mo ; \
+	done
+
