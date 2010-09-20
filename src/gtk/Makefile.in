@@ -40,6 +40,9 @@ localedir := @localedir@
 # Configure project files
 srcdir := @srcdir@
 podir := $(srcdir)/po
+po_files := $(notdir $(wildcard $(podir)/*.po))
+languages := $(basename $(po_files))
+gmo_files := $(addsuffix .gmo, $(languages))
 vpath %.c $(srcdir)
 vpath %.h $(srcdir)
 vpath %.po $(podir)
@@ -47,8 +50,6 @@ vpath %.pot $(podir)
 executable_files :=
 source_files  :=
 object_files  :=
-po_files :=
-gmo_files :=
 xml_files :=
 data_files :=
 
@@ -101,8 +102,8 @@ install-data: $(data_files) $(xml_files)
 	$(INSTALL_DATA) $(data_files) $(xml_files) $(datadir)
 install-mo: $(gmo_files)
 	for i in $^ ; do \
-		d=`basename $$i .gmo` ; \
-		$(INSTALL_DIR) $(localedir)/$$d/LC_MESSAGES ; \
-		$(INSTALL_DATA) $$i $(localedir)/$$d/LC_MESSAGES/$(PACKAGE_NAME).mo ; \
+		lang=`basename $$i .gmo` ; \
+		$(INSTALL_DIR) $(localedir)/$$lang/LC_MESSAGES ; \
+		$(INSTALL_DATA) $$i $(localedir)/$$lang/LC_MESSAGES/$(PACKAGE_NAME).mo ; \
 	done
 

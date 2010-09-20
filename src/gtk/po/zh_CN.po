@@ -1,12 +1,12 @@
-# Chinese translations for hello package
-# hello 软件包的简体中文翻译.
-# Copyright (C) 2010 THE hello'S COPYRIGHT HOLDER
-# This file is distributed under the same license as the hello package.
+# Chinese translations for njit-gui package
+# njit-gui 软件包的简体中文翻译.
+# Copyright (C) 2010 南京工程学院
+# This file is distributed under the same license as the njit-gui package.
 # 刘群 <njit8021xclient@googlegroups.com>, 2010.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: hello\n"
+"Project-Id-Version: njit-gui 1.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-09-20 00:54+0800\n"
 "PO-Revision-Date: 2010-09-19 12:51+0800\n"
