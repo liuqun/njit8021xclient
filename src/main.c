@@ -9,7 +9,7 @@
 #include <unistd.h>
 
 /* 子函数声明 */
-int Authenticaiton(const char *UserName, const char *Password, const char *DeviceName);
+int Authentication(const char *UserName, const char *Password, const char *DeviceName);
 
 
 /**
@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
 	Password = argv[2];
 
 	/* 调用子函数完成802.1X认证 */
-	Authenticaiton(UserName, Password, DeviceName);
+	Authentication(UserName, Password, DeviceName);
 
 	return (0);
 }
