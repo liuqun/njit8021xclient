@@ -1,9 +1,9 @@
 /* File: auth.c
  * ------------
- * 注：核心函数为Authenticaiton()，由该函数执行801.1X认证
+ * 注：核心函数为Authentication()，由该函数执行801.1X认证
  */
 
-int Authenticaiton(const char *UserName, const char *Password, const char *DeviceName);
+int Authentication(const char *UserName, const char *Password, const char *DeviceName);
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -70,13 +70,13 @@ extern void GetIpFromDevice(uint8_t ip[4], const char DeviceName[]);
 
 
 /**
- * 函数：Authenticaiton()
+ * 函数：Authentication()
  *
  * 使用以太网进行802.1X认证(802.1X Authentication)
  * 该函数将不断循环，应答802.1X认证会话，直到遇到错误后才退出
  */
 
-int Authenticaiton(const char *UserName, const char *Password, const char *DeviceName)
+int Authentication(const char *UserName, const char *Password, const char *DeviceName)
 {
 	char	errbuf[PCAP_ERRBUF_SIZE];
 	pcap_t	*adhandle; // adapter handle
