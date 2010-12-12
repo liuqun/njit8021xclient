@@ -50,11 +50,10 @@
   <h2>项目Wiki文档</h2>
     <a href="http://wiki.ubuntu.org.cn/南京工程学院802.1X客户端">点击此处访问位于Ubuntu中文社区的项目文档</a>
 
-  <h2>开发小组邮件列表/讨论板/QQ群</h2>
+  <h2>开发小组联系方式</h2>
     <ul>
-    <li>发送Email到开发小组的公共邮箱<a href="mailto:njit8021xclient@googlegroups.com">njit8021xclient@googlegroups.com</a></li>
-    <li>通过Google网上论坛访问<a href="http://groups.google.com/group/njit8021xclient?hl=zh-CN">校园网802.1X客户端开发小组讨论板</a></li>
     <li>QQ群：86079951</li>
+    <li>Email:开发小组的公共邮箱<a href="mailto:njit8021xclient@googlegroups.com">njit8021xclient@googlegroups.com</a></li>
     </ul>
 
   <h2>小组成员</h2>
@@ -90,25 +89,37 @@
 
   <h2>如何编译</h2>
     <ol>
-      <li>进行编译之前，请安装libpcap和libgcrypt的开发包：
-      <pre>$ sudo apt-get install libpcap-dev libgcrypt-dev</pre>
-      或：
-      <pre>$ su -c "yum install libpcap-devel libgcrypt-devel"</pre>
+      <li>首先应检查开发工具是否齐全，通常Linux默认安装的开发工具应包括：
+      gcc、glibc、binutils、make、autoconf、automake、libtool
       </li>
 
-      <li>在源代码目录下使用make命令进行编译：
+      <li>然后安装libpcap库和libgcrypt库的开发包。Ubuntu下使用apt-get：
+      <pre>$ sudo apt-get install libpcap-dev libgcrypt-dev</pre>
+      Fedora下使用yum：
+      <pre>$ yum install libpcap-devel libgcrypt-devel</pre>
+      </li>
+
+      <li>在源代码src子目录下使用autoconf工具（包括autoreconf）生成configure脚本
+      <pre>$ autoreconf</pre>
+      </li>
+
+      <li>通过configure脚本创建Makefile
+      <pre>$ ./configure</pre>
+      </li>
+
+      <li>使用make命令开始编译
       <pre>$ make</pre>
       </li>
 
-      <li>另外提供一个辅助脚本release-sh用于项目打包发布，使用方法：
-      <pre>$ ./release-sh v1.0 i386</pre>
+      <li>编译成功后调用make install安装可执行文件
+      <pre>$ sudo make install</pre>
       </li>
     </ol>
 </div> <!-- <div id="container"> -->
 
 <div class="footer">
   <hr />
-  <small>华为、锐捷等公司长期以来一直漠视国内广大Linux用户群体，在此表示强烈谴责！</small>
+  <small>© 2010 南京工程学院. All rights reserved.</small>
 </div>
 
 </body>
