@@ -7,15 +7,6 @@ CFLAGS := @CFLAGS@
 LDFLAGS := @LDFLAGS@
 EXEEXT := @EXEEXT@
 
-# Library packages
-PKG_CONFIG := @PKG_CONFIG@
-ifndef PKG_CONFIG
- $(error Can not find pkg-config, \
-         please try ./configure PKG_CONFIG=/opt/gtk/bin/pkg-config)
-endif
-GTK_CFLAGS = $(shell "$(PKG_CONFIG)" --cflags gtk+-2.0)
-GTK_LIBS = $(shell "$(PKG_CONFIG)" --libs gtk+-2.0)
-
 # Useful commands
 MKDIR := mkdir -p
 RM := rm -rf
