@@ -7,6 +7,14 @@ CFLAGS := @CFLAGS@
 LDFLAGS := @LDFLAGS@
 EXEEXT := @EXEEXT@
 
+# Libraries
+libpcap_CFLAGS := @libpcap_CFLAGS@
+libpcap_LIBS   := @libpcap_LIBS@
+libgcrypt_CFLAGS := @libgcrypt_CFLAGS@
+libgcrypt_LIBS   := @libgcrypt_LIBS@
+libcrypto_CFLAGS := @libcrypto_CFLAGS@
+libcrypto_LIBS   := @libcrypto_LIBS@
+
 # Useful commands
 MKDIR := mkdir -p
 RM := rm -rf
@@ -45,15 +53,15 @@ source_files += ip.c
 source_files += config.c
 
 source_files += auth.c
-auth.o: CFLAGS+=$(shell pcap-config --cflags)
+auth.o: CFLAGS+=$(libpcap_CFLAGS)
 
 source_files += fillmd5.c
-fillmd5.o: CFLAGS+=$(shell libgcrypt-config --cflags)
+fillmd5.o: CFLAGS+=$(libgcrypt_CFLAGS)
 
 object_files = $(patsubst %.c, %.o, $(source_files))
 
-njit-client@EXEEXT@: LDLIBS+=$(shell pcap-config --libs)
-njit-client@EXEEXT@: LDLIBS+=$(shell libgcrypt-config --libs)
+njit-client@EXEEXT@: LDLIBS+=$(libpcap_LIBS)
+njit-client@EXEEXT@: LDLIBS+=$(libgcrypt_LIBS)
 njit-client@EXEEXT@: $(object_files)
 	$(LINK.o) $^ $(LDLIBS) -o $@
 
