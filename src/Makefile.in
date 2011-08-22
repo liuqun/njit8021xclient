@@ -55,13 +55,13 @@ source_files += config.c
 source_files += auth.c
 auth.o: CFLAGS+=$(libpcap_CFLAGS)
 
-source_files += fillmd5.c
-fillmd5.o: CFLAGS+=$(libgcrypt_CFLAGS)
+source_files += fillmd5-@md5lib@.c
+fillmd5-@md5lib@.o: CFLAGS+=$(@md5lib@_CFLAGS)
 
 object_files = $(patsubst %.c, %.o, $(source_files))
 
 njit-client@EXEEXT@: LDLIBS+=$(libpcap_LIBS)
-njit-client@EXEEXT@: LDLIBS+=$(libgcrypt_LIBS)
+njit-client@EXEEXT@: LDLIBS+=$(@md5lib@_LIBS)
 njit-client@EXEEXT@: $(object_files)
 	$(LINK.o) $^ $(LDLIBS) -o $@
 

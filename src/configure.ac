@@ -15,6 +15,7 @@ AC_SUBST([libcrypto_LIBS], [])
 AC_ARG_WITH([libgcrypt], AC_HELP_STRING([--with-libgcrypt], [use libgcrypt @<:@default=yes@:>@ ]), [], [with_libgcrypt=yes])
 AC_ARG_WITH([libcrypto], AC_HELP_STRING([--with-libcrypto], [use libcrypto as a replacement for libgcrypt @<:@default=no@:>@ ]), [], [with_libcrypto=no])
 if test "x$with_libgcrypt" = "xyes" || test "x$with_libgcrypt" = "xcheck" ; then
+	lib=libgcrypt
 	dnl 调用libgcrypt自带的libgcrypt-config脚本确定编译器参数
 	AC_PATH_TOOL([LIBGCRYPT_CONFIG], [libgcrypt-config])
 	if test -z $ac_pt_LIBGCRYPT_CONFIG; then
@@ -25,10 +26,9 @@ if test "x$with_libgcrypt" = "xyes" || test "x$with_libgcrypt" = "xcheck" ; then
 	fi
 elif test "x$with_libgcrypt" = "xno" ; then
 	lib=libcrypto
-	if test "x$with_libcrypto" = "xcheck" ; then
+	if test "x$with_libcrypto" = "xyes" || "x$with_libcrypto" = "xcheck" ; then
 		dnl 利用pkg-config工具自动确定libcrypto的编译参数
 		PKG_CHECK_MODULES([libcrypto], [libcrypto])
-		AC_MSG_ERROR([Sorry, "--with-libcrypto" is not supported yet!])
 	elif test "x$with_libcrypto" = "xno" ; then
 		AC_MSG_ERROR([Either "--with-libcrypto" or "--with-libgcrypt" should be chosen!])
 	else
