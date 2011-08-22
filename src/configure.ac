@@ -7,13 +7,13 @@ AC_INIT([njit8021xclient],[1.0],[njit8021xclient@googlegroups.com],[njit8021xcli
 AC_PROG_CC
 PKG_PROG_PKG_CONFIG([0.15])
 
-dnl 默认优先调用libgcrypt的MD5算法, 预留libcrypto作为备选项
+dnl 默认优先调用libcrypto的MD5算法, 预留libgcrypt作为备选项
 AC_SUBST([libgcrypt_CFLAGS], [])
 AC_SUBST([libgcrypt_LIBS], [])
 AC_SUBST([libcrypto_CFLAGS], [])
 AC_SUBST([libcrypto_LIBS], [])
-AC_ARG_WITH([libgcrypt], AC_HELP_STRING([--with-libgcrypt], [use libgcrypt @<:@default=yes@:>@ ]), [], [with_libgcrypt=yes])
-AC_ARG_WITH([libcrypto], AC_HELP_STRING([--with-libcrypto], [use libcrypto as a replacement for libgcrypt @<:@default=no@:>@ ]), [], [with_libcrypto=no])
+AC_ARG_WITH([libgcrypt], AC_HELP_STRING([--with-libgcrypt], [use libgcrypt @<:@default=no@:>@ ]), [], [with_libgcrypt=no])
+AC_ARG_WITH([libcrypto], AC_HELP_STRING([--with-libcrypto], [use libcrypto as a replacement for libgcrypt @<:@default=yes@:>@ ]), [], [with_libcrypto=yes])
 if test "x$with_libgcrypt" = "xyes" || test "x$with_libgcrypt" = "xcheck" ; then
 	lib=libgcrypt
 	dnl 调用libgcrypt自带的libgcrypt-config脚本确定编译器参数
