@@ -1,14 +1,27 @@
 /* File: main.c
  * ------------
- *
+ * 校园网802.1X客户端命令行
  */
 
 #include <stdio.h>
 #include <stdlib.h>
-#if HAVE_CONFIG_H
-#include "config.h"
-#endif/*HAVE_CONFIG_H*/
 
+#include <unistd.h>
+
+/* 子函数声明 */
+int Authentication(const char *UserName, const char *Password, const char *DeviceName);
+
+
+/**
+ * 函数：main()
+ *
+ * 检查程序的执行权限，检查命令行参数格式。
+ * 允许的调用格式包括：
+ * 	njit-client  username  password
+ * 	njit-client  username  password  eth0
+ * 	njit-client  username  password  eth1
+ * 若没有从命令行指定网卡，则默认将使用eth0
+ */
 int main(int argc, char *argv[])
 {
 	char *UserName;
@@ -39,6 +52,9 @@ int main(int argc, char *argv[])
 	}
 	UserName = argv[1];
 	Password = argv[2];
+
+	/* 调用子函数完成802.1X认证 */
+	Authentication(UserName, Password, DeviceName);
 
 	return (0);
 }

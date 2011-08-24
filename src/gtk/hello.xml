@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui>
+  <menubar name="MainMenuBar">
+    <menu name="FileMenu" action="FileMenuAction">
+      <menuitem name="Send" action="SendAction" />
+      <separator/>
+      <menuitem name="Quit" action="QuitAction" />
+      <placeholder name="FileMenuAdditions" />
+    </menu>
+  </menubar>
+  
+  <toolbar name="MainToolbar" action="MainMenuBarAction">
+    <placeholder name="ToolItems">
+      <separator/>
+      <toolitem name="Send" action="SendAction"/>
+      <separator/>
+    </placeholder>
+  </toolbar>
+</ui>
+
+
