@@ -37,7 +37,7 @@ dnl calling AC_PROG_CC, and then doing the tests we now do in
 dnl AC_LBL_C_INIT.  Now, we run AC_LBL_C_INIT_BEFORE_CC, AC_PROG_CC,
 dnl and AC_LBL_C_INIT at the top level.
 dnl
-AC_DEFUN(AC_LBL_C_INIT_BEFORE_CC,
+AC_DEFUN([AC_LBL_C_INIT_BEFORE_CC],
     [AC_PREREQ(2.50)
     AC_BEFORE([$0], [AC_LBL_C_INIT])
     AC_BEFORE([$0], [AC_PROG_CC])
@@ -90,7 +90,7 @@ dnl	LDFLAGS
 dnl	ac_cv_lbl_gcc_vers
 dnl	LBL_CFLAGS
 dnl
-AC_DEFUN(AC_LBL_C_INIT,
+AC_DEFUN([AC_LBL_C_INIT],
     [AC_PREREQ(2.50)
     AC_BEFORE([$0], [AC_LBL_FIXINCLUDES])
     AC_BEFORE([$0], [AC_LBL_DEVEL])
@@ -214,7 +214,7 @@ AC_DEFUN(AC_LBL_C_INIT,
 # Make sure we use the V_CCOPT flags, because some of those might
 # disable inlining.
 #
-AC_DEFUN(AC_LBL_C_INLINE,
+AC_DEFUN([AC_LBL_C_INLINE],
     [AC_MSG_CHECKING(for inline)
     save_CFLAGS="$CFLAGS"
     CFLAGS="$V_CCOPT"
@@ -270,7 +270,7 @@ dnl	$2 (incls appended)
 dnl	LIBS
 dnl	LBL_LIBS
 dnl
-AC_DEFUN(AC_LBL_LIBPCAP,
+AC_DEFUN([AC_LBL_LIBPCAP],
     [AC_REQUIRE([AC_LBL_LIBRARY_NET])
     dnl
     dnl save a copy before locating libpcap.a
@@ -454,17 +454,17 @@ config.log file in your report])
     dnl if they're not present.
     dnl
     AC_CHECK_FUNC(pcap_list_datalinks,
-	AC_DEFINE(HAVE_PCAP_LIST_DATALINKS),
+	AC_DEFINE(HAVE_PCAP_LIST_DATALINKS,[],[pcap_list_datalinks()]),
 	[
 	    AC_LIBOBJ(datalinks)
 	])
     AC_CHECK_FUNC(pcap_set_datalink,
-	AC_DEFINE(HAVE_PCAP_SET_DATALINK))
+	AC_DEFINE(HAVE_PCAP_SET_DATALINK,[],[pcap_set_datalink()]))
     AC_CHECK_FUNC(pcap_datalink_name_to_val,
 	[
-	    AC_DEFINE(HAVE_PCAP_DATALINK_NAME_TO_VAL)
+	    AC_DEFINE(HAVE_PCAP_DATALINK_NAME_TO_VAL,[],[pcap_datalink_name_to_val()])
 	    AC_CHECK_FUNC(pcap_datalink_val_to_description,
-		AC_DEFINE(HAVE_PCAP_DATALINK_VAL_TO_DESCRIPTION),
+	    AC_DEFINE(HAVE_PCAP_DATALINK_VAL_TO_DESCRIPTION,[],[pcap_datalink_val_to_description()]),
 		[
 		    AC_LIBOBJ(dlnames)
 		])
@@ -484,7 +484,7 @@ config.log file in your report])
     dnl Check for "pcap_dump_ftell()" and use a substitute version
     dnl if it's not present.
     AC_CHECK_FUNC(pcap_dump_ftell,
-	AC_DEFINE(HAVE_PCAP_DUMP_FTELL),
+	AC_DEFINE(HAVE_PCAP_DUMP_FTELL,[],[pcap_dump_ftell()]),
 	[
 	    AC_LIBOBJ(pcap_dump_ftell)
 	])
@@ -502,7 +502,7 @@ dnl
 dnl	RETSIGTYPE (defined)
 dnl	RETSIGVAL (defined)
 dnl
-AC_DEFUN(AC_LBL_TYPE_SIGNAL,
+AC_DEFUN([AC_LBL_TYPE_SIGNAL],
     [AC_BEFORE([$0], [AC_LBL_LIBPCAP])
     AC_TYPE_SIGNAL
     if test "$ac_cv_type_signal" = void ; then
@@ -532,7 +532,7 @@ dnl usage:
 dnl
 dnl	AC_LBL_FIXINCLUDES
 dnl
-AC_DEFUN(AC_LBL_FIXINCLUDES,
+AC_DEFUN([AC_LBL_FIXINCLUDES],
     [if test "$GCC" = yes ; then
 	    AC_MSG_CHECKING(for ANSI ioctl definitions)
 	    AC_CACHE_VAL(ac_cv_lbl_gcc_fixincludes,
@@ -572,7 +572,7 @@ dnl results:
 dnl
 dnl	DECLWAITSTATUS (defined)
 dnl
-AC_DEFUN(AC_LBL_UNION_WAIT,
+AC_DEFUN([AC_LBL_UNION_WAIT],
     [AC_MSG_CHECKING(if union wait is used)
     AC_CACHE_VAL(ac_cv_lbl_union_wait,
 	AC_TRY_COMPILE([
@@ -601,7 +601,7 @@ dnl results:
 dnl
 dnl	HAVE_SOCKADDR_SA_LEN (defined)
 dnl
-AC_DEFUN(AC_LBL_SOCKADDR_SA_LEN,
+AC_DEFUN([AC_LBL_SOCKADDR_SA_LEN],
     [AC_MSG_CHECKING(if sockaddr struct has the sa_len member)
     AC_CACHE_VAL(ac_cv_lbl_sockaddr_has_sa_len,
 	AC_TRY_COMPILE([
@@ -626,7 +626,7 @@ dnl results:
 dnl
 dnl	ac_cv_lbl_have_run_path (yes or no)
 dnl
-AC_DEFUN(AC_LBL_HAVE_RUN_PATH,
+AC_DEFUN([AC_LBL_HAVE_RUN_PATH],
     [AC_MSG_CHECKING(for ${CC-cc} -R)
     AC_CACHE_VAL(ac_cv_lbl_have_run_path,
 	[echo 'main(){}' > conftest.c
@@ -643,7 +643,7 @@ AC_DEFUN(AC_LBL_HAVE_RUN_PATH,
 dnl
 dnl Check whether a given format can be used to print 64-bit integers
 dnl
-AC_DEFUN(AC_LBL_CHECK_64BIT_FORMAT,
+AC_DEFUN([AC_LBL_CHECK_64BIT_FORMAT],
   [
     AC_MSG_CHECKING([whether %$1x can be used to format 64-bit integers])
     AC_RUN_IFELSE(
@@ -695,7 +695,7 @@ dnl results:
 dnl
 dnl	LBL_ALIGN (DEFINED)
 dnl
-AC_DEFUN(AC_LBL_UNALIGNED_ACCESS,
+AC_DEFUN([AC_LBL_UNALIGNED_ACCESS],
     [AC_MSG_CHECKING(if unaligned accesses fail)
     AC_CACHE_VAL(ac_cv_lbl_unaligned_fail,
 	[case "$host_cpu" in
@@ -801,7 +801,7 @@ dnl	$1 (copt appended)
 dnl	HAVE_OS_PROTO_H (defined)
 dnl	os-proto.h (symlinked)
 dnl
-AC_DEFUN(AC_LBL_DEVEL,
+AC_DEFUN([AC_LBL_DEVEL],
     [rm -f os-proto.h
     if test "${LBL_CFLAGS+set}" = set; then
 	    $1="$$1 ${LBL_CFLAGS}"
@@ -938,7 +938,7 @@ dnl The check for libresolv is in case you are attempting to link
 dnl statically and happen to have a libresolv.a lying around (and no
 dnl libnsl.a).
 dnl
-AC_DEFUN(AC_LBL_LIBRARY_NET, [
+AC_DEFUN([AC_LBL_LIBRARY_NET], [
     # Most operating systems have gethostbyname() in the default searched
     # libraries (i.e. libc):
     # Some OSes (eg. Solaris) place it in libnsl
@@ -985,7 +985,7 @@ dnl SUCH DAMAGE.
 
 dnl
 dnl Checks to see if AF_INET6 is defined
-AC_DEFUN(AC_CHECK_AF_INET6, [
+AC_DEFUN([AC_CHECK_AF_INET6], [
 	AC_MSG_CHECKING(for AF_INET6)
 	AC_CACHE_VAL($1,
 	AC_TRY_COMPILE([
@@ -1003,7 +1003,7 @@ AC_DEFUN(AC_CHECK_AF_INET6, [
 dnl
 dnl Checks to see if the sockaddr struct has the 4.4 BSD sa_len member
 dnl borrowed from LBL libpcap
-AC_DEFUN(AC_CHECK_SA_LEN, [
+AC_DEFUN([AC_CHECK_SA_LEN], [
 	AC_MSG_CHECKING(if sockaddr struct has sa_len member)
 	AC_CACHE_VAL($1,
 	AC_TRY_COMPILE([
@@ -1020,7 +1020,7 @@ AC_DEFUN(AC_CHECK_SA_LEN, [
 
 dnl
 dnl Checks for addrinfo structure
-AC_DEFUN(AC_STRUCT_ADDRINFO, [
+AC_DEFUN([AC_STRUCT_ADDRINFO], [
 	AC_MSG_CHECKING(for addrinfo)
 	AC_CACHE_VAL($1,
 	AC_TRY_COMPILE([
@@ -1038,7 +1038,7 @@ AC_DEFUN(AC_STRUCT_ADDRINFO, [
 
 dnl
 dnl Checks for NI_MAXSERV
-AC_DEFUN(AC_NI_MAXSERV, [
+AC_DEFUN([AC_NI_MAXSERV], [
 	AC_MSG_CHECKING(for NI_MAXSERV)
 	AC_CACHE_VAL($1,
 	AC_EGREP_CPP(yes, [#include <netdb.h>
@@ -1055,7 +1055,7 @@ yes
 
 dnl
 dnl Checks for NI_NAMEREQD
-AC_DEFUN(AC_NI_NAMEREQD, [
+AC_DEFUN([AC_NI_NAMEREQD], [
 	AC_MSG_CHECKING(for NI_NAMEREQD)
 	AC_CACHE_VAL($1,
 	AC_EGREP_CPP(yes, [#include <netdb.h>
@@ -1072,7 +1072,7 @@ yes
 
 dnl
 dnl Checks for sockaddr_storage structure
-AC_DEFUN(AC_STRUCT_SA_STORAGE, [
+AC_DEFUN([AC_STRUCT_SA_STORAGE], [
 	AC_MSG_CHECKING(for sockaddr_storage)
 	AC_CACHE_VAL($1,
 	AC_TRY_COMPILE([
@@ -1089,7 +1089,7 @@ AC_DEFUN(AC_STRUCT_SA_STORAGE, [
 
 dnl
 dnl check for h_errno
-AC_DEFUN(AC_VAR_H_ERRNO, [
+AC_DEFUN([AC_VAR_H_ERRNO], [
 	AC_MSG_CHECKING(for h_errno)
 	AC_CACHE_VAL(ac_cv_var_h_errno,
 	AC_TRY_COMPILE([
@@ -1108,7 +1108,7 @@ dnl
 dnl Test for __attribute__
 dnl
 
-AC_DEFUN(AC_C___ATTRIBUTE__, [
+AC_DEFUN([AC_C___ATTRIBUTE__], [
 AC_MSG_CHECKING(for __attribute__)
 AC_CACHE_VAL(ac_cv___attribute__, [
 AC_COMPILE_IFELSE([
@@ -1146,7 +1146,7 @@ dnl Test whether __attribute__((format)) can be applied to function
 dnl pointers
 dnl
 
-AC_DEFUN(AC_C___ATTRIBUTE___FORMAT_FUNCTION_POINTER, [
+AC_DEFUN([AC_C___ATTRIBUTE___FORMAT_FUNCTION_POINTER], [
 AC_MSG_CHECKING([whether __attribute__((format)) can be applied to function pointers])
 AC_CACHE_VAL(ac_cv___attribute___format_function_pointer, [
 AC_COMPILE_IFELSE([
@@ -1171,7 +1171,7 @@ fi
 AC_MSG_RESULT($ac_cv___attribute___format_function_pointer)
 ])
 
-AC_DEFUN(AC_LBL_SSLEAY,
+AC_DEFUN([AC_LBL_SSLEAY],
     [
 	#
 	# Find the last component of $libdir; it's not necessarily
