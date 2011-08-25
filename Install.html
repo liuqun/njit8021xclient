@@ -22,7 +22,12 @@
 	make
 安装：
 	make install
-注1：默认安装至/usr/local目录
+注1：默认安装至/usr/local目录，需要root管理员权限
+注2：可以通过设置DESTDIR将编译好的文件输出至临时文件夹，然后压缩打包
+	make install DESTDIR="/tmp/临时文件夹"
+	...
+	cd /tmp/临时文件夹/
+	tar xzf njit8021xlient-1.0-i386.tar.gz .
 
 如果您在使用或编译过程中遇到困难，可以在发送Email至开发小组的公共信箱
 	njit8021xclient@googlegroups.com
