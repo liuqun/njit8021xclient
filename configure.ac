@@ -19,6 +19,15 @@ AC_SUBST(V_GROUP)
 AC_SUBST(V_INCLS)
 AC_SUBST(V_PCAPDEP)
 PKG_CHECK_MODULES([libcrypto], [libcrypto])
+dnl 配置GUI
+gtk_version_required="2.0.0"
+AM_PATH_GTK_2_0([$gtk_version_required], [have_gtk_2_0="yes"], [])
+if test "x"$have_gtk_2_0 = "xyes" ; then
+	AC_DEFINE([HAVE_GTK_2_0], [], [支持GTK+ 2.0用户界面])
+	AC_CONFIG_SUBDIRS([src-gui])
+else
+	AC_MSG_WARN(["You need gtk >= $gtk_version_required to enable graphic user interface of $PACKAGE"])
+fi
 AC_CONFIG_HEADER([src/config.h])
 AC_CONFIG_FILES([
 	Makefile

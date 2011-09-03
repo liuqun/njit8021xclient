@@ -9,7 +9,6 @@
 
 static void SendHelloWorld(gpointer);
 
-
 int main(int argc, char *argv[])
 {
 	GtkWidget           *win = NULL;            /* The main window */
