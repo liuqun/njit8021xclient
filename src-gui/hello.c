@@ -43,9 +43,29 @@ int main(int argc, char *argv[])
 	gtk_action_group_set_translation_domain(action_group, g_config.package_name);
 	menu_manager = gtk_ui_manager_new();
 
-	/* Read in the UI from our XML file */
+	/* Load UI from XML string */
+	const gchar *UI =
+		"<ui>"
+		"  <menubar name='MainMenuBar'>"
+		"    <menu name='FileMenu' action='FileMenuAction'>"
+		"      <menuitem name='Send' action='SendAction' />"
+		"      <separator/>"
+		"      <menuitem name='Quit' action='QuitAction' />"
+		"      <placeholder name='FileMenuAdditions' />"
+		"    </menu>"
+		"  </menubar>"
+		""
+		"  <toolbar name='MainToolbar' action='MainMenuBarAction'>"
+		"    <placeholder name='ToolItems'>"
+		"      <separator/>"
+		"      <toolitem name='Send' action='SendAction'/>"
+		"      <separator/>"
+		"    </placeholder>"
+		"  </toolbar>"
+		"</ui>"
+		;
 	error = NULL;
-	gtk_ui_manager_add_ui_from_file(menu_manager, "hello.xml", &error);
+	gtk_ui_manager_add_ui_from_string(menu_manager, UI, strlen(UI), &error);
 
 	if (error)
 	{
