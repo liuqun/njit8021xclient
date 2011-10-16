@@ -1,5 +1,7 @@
 ACLOCAL_AMFLAGS = -I m4
-bin_PROGRAMS = client
+bin_PROGRAMS = \
+		client \
+		$(NULL)
 client_SOURCES = \
 		main.c \
 		auth.c \
@@ -7,7 +9,8 @@ client_SOURCES = \
 		fillmd5-libcrypto.c \
 		njit8021xclient.c \
 		njit8021xclient.h \
-		debug.h
+		debug.h \
+		$(NULL)
 CCOPT = $(V_CCOPT)
 DEFS  = $(V_DEFS)
 INCLS = $(V_INCLS)
