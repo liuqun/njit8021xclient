@@ -1,5 +1,5 @@
 ACLOCAL_AMFLAGS = -I m4
-bin_PROGRAMS = \
+sbin_PROGRAMS = \
 		client \
 		$(NULL)
 client_SOURCES = \
