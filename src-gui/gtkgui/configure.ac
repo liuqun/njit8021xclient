@@ -16,10 +16,9 @@ AM_GLIB_GNU_GETTEXT
 AM_GLIB_DEFINE_LOCALEDIR(LOCALEDIR) 
 AM_PATH_GTK_2_0
 
-AC_CONFIG_HEADERS([src/config.h])
+AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([
 	Makefile
-	src/Makefile
 	tests/Makefile
 	po/Makefile.in
 ])
