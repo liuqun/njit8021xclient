@@ -30,8 +30,9 @@ typedef enum {IDENTITY=1, NOTIFICATION=2, MD5=4, AVAILABLE=20} EAP_Type;
 typedef uint8_t EAP_ID;
 const uint8_t BroadcastAddr[6] = {0xff,0xff,0xff,0xff,0xff,0xff}; // 广播MAC地址
 const uint8_t MultcastAddr[6]  = {0x01,0x80,0xc2,0x00,0x00,0x03}; // 多播MAC地址
-const char H3C_VERSION[16]="EN V2.40-0335"; // 华为客户端版本号
-const char H3C_KEY[]      ="HuaWei3COM1X";  // H3C的固定密钥
+const char H3C_VERSION[16]="CH V3.60-6303"; // 华为客户端版本号
+const char H3C_KEY[64]    ="HuaWei3COM1X";  // H3C的固定密钥
+//const char H3C_KEY[64]  ="Oly5D62FaE94W7";  // H3C的另一个固定密钥，网友取自MacOSX版本的iNode官方客户端
 
 // 子函数声明
 static void SendStartPkt(pcap_t *adhandle, const uint8_t mac[]);
