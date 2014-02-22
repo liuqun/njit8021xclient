@@ -4,6 +4,7 @@
 #include <glib.h>
 #include <glib/gi18n.h>
 #include <gtk/gtk.h>
+#include <gio/gio.h>
 
 #include "hello.h"
 
@@ -130,6 +131,32 @@ int main(int argc, char *argv[])
 
 static void SendHelloWorld(gpointer p)
 {
-	(void) p;
-	g_print("%s\n", _("Hello world!"));
+	GError  *error;
+	GSocket        *socket;
+	GSocketAddress *remote;
+	GInetAddress   *ip;
+	guint16         port;
+	gchar        data[100];
+	const gsize  length=sizeof(data)-1;
+	struct tm    now;
+	time_t       sys_clock;
+
+	sys_clock=time(NULL);
+	localtime_r(&sys_clock, &now);
+	g_snprintf(data, sizeof(data), "Hello world! Current time is %02d:%02d:%02d\n", now.tm_hour, now.tm_min, now.tm_sec);
+
+	socket = g_socket_new(G_SOCKET_FAMILY_IPV4, G_SOCKET_TYPE_DATAGRAM, G_SOCKET_PROTOCOL_DEFAULT, &error);
+	ip = g_inet_address_new_loopback(G_SOCKET_FAMILY_IPV4); // FIXME: IP should not be hard-coded
+	port = 8080; // FIXME: port number should not be hard-coded
+	remote = g_inet_socket_address_new(ip, port);
+	g_socket_send_to(socket, remote, data, strlen(data), NULL, NULL);
+	g_socket_close(socket, NULL);
+
+	/* Note: Don't forget to clean up the resources. */
+	g_object_unref(ip);
+	ip = NULL;
+	g_object_unref(remote);
+	remote = NULL;
+	g_object_unref(socket);
+	socket = NULL;
 }
