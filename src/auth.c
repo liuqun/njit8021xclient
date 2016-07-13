@@ -84,7 +84,7 @@ int Authentication(const char *UserName, const char *Password, const char *Devic
 	uint8_t	MAC[6];
 	char	FilterStr[100];
 	struct bpf_program	fcode;
-	const int DefaultTimeout=60000;//设置接收超时参数，单位ms
+	const int DefaultTimeout=100;//设置接收超时参数，单位ms
 
 	// NOTE: 这里没有检查网线是否已插好,网线插口可能接触不良
 	
