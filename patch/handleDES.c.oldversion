@@ -1,0 +1,67 @@
+#include <stdio.h>
+#include <stdint.h>
+#include <string.h>
+#include <openssl/md5.h>
+
+typedef unsigned int u_int;
+typedef unsigned char u_char;
+void des3_ecb_decrypt (u_int *data);
+
+union TData
+{
+    u_int i[8];
+    u_char c[32];
+}Ddata;
+
+u_char result[32];
+void data_invert ()
+{
+    int i;
+	for (i=0;i<32;i+=4)
+	{
+		u_char tmp=Ddata.c[i]; Ddata.c[i]=Ddata.c[i+3]; Ddata.c[i+3]=tmp;
+		tmp=Ddata.c[i+1]; Ddata.c[i+1]=Ddata.c[i+2]; Ddata.c[i+2]=tmp;
+	}
+}
+void md5Transform ()
+{
+    u_char result1[16];
+    (void) MD5(Ddata.c,sizeof(Ddata.c),result1);
+    (void) MD5(result1,sizeof(result1),result+16);
+    memcpy(result,result1,sizeof(result1));
+}
+u_char* HandleKeepOnline(const uint8_t request[])
+{
+    int i=0;
+    memcpy (Ddata.c,request+27,sizeof(Ddata.c));
+    /*
+    for (int i=0;i<32;i++)
+        printf("%02x ",Ddata.c[i]);
+    printf("<%lu %lu>\n",sizeof(u_int),sizeof(u_char));
+    */
+        data_invert();
+    des3_ecb_decrypt(Ddata.i);
+        data_invert();
+    md5Transform();
+    return result;
+        //Warning：If u use Intel CPU，u will use data_invert() function to convert;
+        //But MIPS-32bits needn't it.
+        //Excuse my pool English......
+}
+
+// * Only for debug "patch" folder
+u_char OroData[80];
+u_char *ans;
+int main ()
+{
+    freopen ("data.in","r",stdin);
+    for (int i=0;i<67;i++)
+        scanf ("%x",&OroData[i]);
+    ans=HandleKeepOnline(OroData);
+    for (int i=0;i<32;i++)
+    {
+        printf ("%02x ",ans[i]);
+        if ((i+1)%8==0) printf("\n");
+    }
+    return 0;
+}
