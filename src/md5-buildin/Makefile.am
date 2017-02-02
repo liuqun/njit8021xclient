@@ -1,3 +1,4 @@
+AUTOMAKE_OPTIONS = subdir-objects
 bin_PROGRAMS = md5test \
 		$(NULL)
 md5test_SOURCES = md5test.c \
