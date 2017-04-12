@@ -2,6 +2,20 @@
  * ------------
  * 注：核心函数为Authentication()，由该函数执行801.1X认证
  */
+ 
+ /*
+ * 修改者：		CUIT: Kingxf
+ * 修改目的： 	支持在openwrt上单线多播
+ *
+ * 修改备注： 	单线多播需要使用macvlan做网卡克隆。
+ * 				而macvlan产生的虚拟网卡逻辑上与真实网卡在同一个集线器中
+ * 				为了多播互不影响，我关闭了混杂模式抓包
+ *				不过似乎关闭混杂模式在路由器环境中没有效果，我怀疑是libpcap的bug
+ *				于是我只好修改过滤器规则，以过滤掉不属于自身的包
+ *
+ *
+ *								2015/5/22
+*/
 
 int Authentication(const char *UserName, const char *Password, const char *DeviceName);
 
@@ -82,7 +96,10 @@ int Authentication(const char *UserName, const char *Password, const char *Devic
 	char	errbuf[PCAP_ERRBUF_SIZE];
 	pcap_t	*adhandle; // adapter handle
 	uint8_t	MAC[6];
-	char	FilterStr[100];
+	char	FilterStr[150];
+	char	DestMustMeFilterStr[50];		//(ether dst host %02x:%02x:%02x:%02x:%02x:%02x)
+	
+	
 	struct bpf_program	fcode;
 	const int DefaultTimeout=100;//设置接收超时参数，单位ms
 
@@ -103,8 +120,9 @@ int Authentication(const char *UserName, const char *Password, const char *Devic
 	 * 初始情况下只捕获发往本机的802.1X认证会话，不接收多播信息（避免误捕获其他客户端发出的多播信息）
 	 * 进入循环体前可以重设过滤器，那时再开始接收多播信息
 	 */
-	sprintf(FilterStr, "(ether proto 0x888e) and (ether dst host %02x:%02x:%02x:%02x:%02x:%02x)",
-							MAC[0],MAC[1],MAC[2],MAC[3],MAC[4],MAC[5]);
+	sprintf(DestMustMeFilterStr, "(ether dst host %02x:%02x:%02x:%02x:%02x:%02x)", \
+				MAC[0],MAC[1],MAC[2],MAC[3],MAC[4],MAC[5]);
+	sprintf(FilterStr, "(ether proto 0x888e) and %s", DestMustMeFilterStr);
 	pcap_compile(adhandle, &fcode, FilterStr, 1, 0xff);
 	pcap_setfilter(adhandle, &fcode);
 
@@ -176,8 +194,9 @@ int Authentication(const char *UserName, const char *Password, const char *Devic
 		}
 
 		// 重设过滤器，只捕获华为802.1X认证设备发来的包（包括多播Request Identity / Request AVAILABLE）
-		sprintf(FilterStr, "(ether proto 0x888e) and (ether src host %02x:%02x:%02x:%02x:%02x:%02x)",
-			captured[6],captured[7],captured[8],captured[9],captured[10],captured[11]);
+		sprintf(FilterStr, "(ether proto 0x888e) and "							\
+					"(ether src host %02x:%02x:%02x:%02x:%02x:%02x) and %s",	\
+					captured[6],captured[7],captured[8],captured[9],captured[10],captured[11], DestMustMeFilterStr);
 		pcap_compile(adhandle, &fcode, FilterStr, 1, 0xff);
 		pcap_setfilter(adhandle, &fcode);
 
